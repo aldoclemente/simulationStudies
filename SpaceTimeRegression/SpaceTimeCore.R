@@ -47,6 +47,8 @@ SpaceTimeRegressionCore <- function(ND_,
   
   
   nnodes_ = nrow(mesh$nodes)
+  mean.field.fdaPDE = matrix(0,nrow=nnodes*length(time_locations), ncol=length(n_data))
+  
   
   start.time = Sys.time()
   for(j in 1:length(n_data)){  
@@ -88,6 +90,12 @@ SpaceTimeRegressionCore <- function(ND_,
                                      lambdaS = output_CPP$optimization$lambda_solution[1],
                                      lambdaT = output_CPP$optimization$lambda_solution[2])
           RMSE.fdaPDE[i,j] = rmse(true.signal[sample_], prediction)
+          
+          mean.field.fdaPDE[,j] = mean.field.fdaPDE[,j] + eval.FEM.time(FEM.time = output_CPP$fit.FEM.time, 
+                                                                        locations=mesh$nodes,
+                                                                        time.instants=time_locations,
+                                                                        lambdaS = output_CPP$optimization$lambda_solution[1],
+                                                                        lambdaT = output_CPP$optimization$lambda_solution[2])/n_sim
         }
         ### GWR ### 
         
@@ -171,6 +179,12 @@ SpaceTimeRegressionCore <- function(ND_,
                           lambdaT = output_CPP$optimization$lambda_solution[2]) +
              W[sample_,]%*%as.vector(output_CPP$beta)
           RMSE.fdaPDE[i,j] = rmse(true.signal[sample_], prediction)
+          
+          mean.field.fdaPDE[,j] = mean.field.fdaPDE[,j] + eval.FEM.time(FEM.time = output_CPP$fit.FEM.time, 
+                                                                        locations=mesh$nodes,
+                                                                        time.instants=time_locations,
+                                                                        lambdaS = output_CPP$optimization$lambda_solution[1],
+                                                                        lambdaT = output_CPP$optimization$lambda_solution[2])/n_sim
         }
         ### GWR ### 
         
@@ -253,6 +267,6 @@ SpaceTimeRegressionCore <- function(ND_,
                RMSE.GWR.ED  = RMSE.GWR.ED,
                RMSE.fdaPDE.2D = RMSE.fdaPDE.2D)
   
-  res_ = list(RMSE = RMSE, tot.time=tot.time)
+  res_ = list(RMSE = RMSE, tot.time=tot.time, mean.field.fdaPDE=mean.field.fdaPDE)
   return(res_)
 }

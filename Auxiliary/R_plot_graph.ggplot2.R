@@ -99,7 +99,8 @@ R_plot_graph.ggplot2.2<-function(FEM,
                                  ratio = diff(range(mesh$nodes[,1]))/diff(range(mesh$nodes[,2]) ),
                                  num.color = 128,
                                  a.sym = FALSE,
-                                 return.ggplot.object = FALSE){
+                                 return.ggplot.object = FALSE,
+                                 title.size = 26){
   
   mesh=FEM$FEMbasis$mesh
   x=vector(mode="double")
@@ -134,12 +135,12 @@ R_plot_graph.ggplot2.2<-function(FEM,
   p <- jet.col(n=num.color,alpha=0.8)
   
   MyTheme <- theme(
-    axis.text = element_text(size=24),
-    axis.title = element_text(size=26),
-    title = element_text(size=26),
-    legend.text = element_text(size=20),
+    axis.text = element_text(size=(title.size-2)),
+    axis.title = element_text(size=title.size),
+    title = element_text(size=title.size),
+    legend.text = element_text(size=(title.size-6)),
     legend.key.size = unit(1,"cm"),
-    legend.position = legend.pos
+    legend.position = legend.pos,
   )
   
   data=data.frame(x,y,grp.nodes,coef)
@@ -152,20 +153,19 @@ R_plot_graph.ggplot2.2<-function(FEM,
     coord_fixed(ratio=ratio) + 
     theme_void() +
     theme(plot.title = element_text(hjust=0.5),
-          title = element_text(size=26),
           legend.title = element_blank(),
           axis.title = element_blank(),
-          legend.text = element_text(size=20),
-          legend.key.size = unit(1,"cm"),
+          axis.text.x=element_blank(),
+          axis.text.y=element_blank(),
           legend.key.width = unit(0.5,"cm"))
   }
   else{
     
     MyTheme <- theme(
-      axis.text = element_text(size=14),
-      axis.title = element_text(size=16),
-      title = element_text(size=16),
-      legend.text = element_text(size=10),
+      axis.text = element_text(size=(title.size-2)),
+      axis.title = element_text(size=title.size),
+      title = element_text(size=title.size),
+      legend.text = element_text(size=(title.size-6)),
       legend.key.size = unit(1,"cm"),
       legend.position = legend.pos
     )
@@ -177,12 +177,12 @@ R_plot_graph.ggplot2.2<-function(FEM,
     labs(x="",y="",color="", title=title) +  
     coord_fixed(ratio=ratio) + 
     theme_void() +
+    MyTheme +
     theme(plot.title = element_text(hjust=0.5),
-          title = element_text(size=26),
           legend.title = element_blank(),
           axis.title = element_blank(),
-          legend.text = element_text(size=20),
-          legend.key.size = unit(1,"cm"),
+          axis.text.x=element_blank(),
+          axis.text.y=element_blank(),
           legend.key.width = unit(0.5,"cm"),
           legend.position = legend.pos)
   
@@ -220,12 +220,15 @@ R_plot_graph.R <- function(FEM, title="", line.size="1"){
 R_plot_mesh.ggplot = function(mesh, alpha = 1, line.size=0.5,
                               mesh.2D = NULL, alpha.2D=0.9,
                               points_ = NULL,
+                              points.size = 3,
                               mu = NULL,
                               color.min=min(mu), 
                               color.max=max(mu),
                               title = "",
                               ratio = diff(range(mesh$nodes[,1]))/diff(range(mesh$nodes[,2])),
-                              num.col = 128)
+                              num.col = 128,
+                              title.size = 26,
+                              legend.pos = "right")
   {
   
   x=vector(mode="double")
@@ -240,12 +243,12 @@ R_plot_mesh.ggplot = function(mesh, alpha = 1, line.size=0.5,
   }
   
   MyTheme <- theme(
-    axis.text = element_text(size=24),
-    axis.title = element_text(size=26),
-    title = element_text(size=26),
-    legend.text = element_text(size=20),
+    axis.text = element_text(size=(title.size-2)),
+    axis.title = element_text(size=title.size),
+    title = element_text(size=title.size),
+    legend.text = element_text(size=(title.size-6)),
     legend.key.size = unit(1,"cm"),
-    legend.position = "right"
+    legend.position = legend.pos
   )
   
   if( is.null(mesh.2D) && is.null(points_) ){
@@ -258,12 +261,12 @@ R_plot_mesh.ggplot = function(mesh, alpha = 1, line.size=0.5,
     labs(x="",y="",color="", title=title) +  
     coord_fixed(ratio=ratio) + 
     theme_void() +
+    MyTheme +
     theme(plot.title = element_text(hjust=0.5),
-          title = element_text(size=26),
           legend.title = element_blank(),
           axis.title = element_blank(),
-          legend.text = element_text(size=20),
-          legend.key.size = unit(1,"cm"),
+          axis.text.x=element_blank(),
+          axis.text.y=element_blank(),
           legend.key.width = unit(0.5,"cm"))
   
   }else if(is.null(mesh.2D) && !is.null(points_)){
@@ -292,11 +295,12 @@ R_plot_mesh.ggplot = function(mesh, alpha = 1, line.size=0.5,
       scale_color_gradientn(colours=p, limits = c(color.min, color.max))+ 
       coord_fixed(ratio=ratio) + 
       theme_void() +
+      MyTheme +   
       theme(plot.title = element_text(hjust=0.5),
-            title = element_text(size=26),
             legend.title = element_blank(),
             axis.title = element_blank(),
-            legend.text = element_text(size=20),
+            axis.text.x=element_blank(),
+            axis.text.y=element_blank(),
             legend.key.size = unit(1,"cm"),
             legend.key.width = unit(0.5,"cm"))
     }else{
@@ -306,17 +310,17 @@ R_plot_mesh.ggplot = function(mesh, alpha = 1, line.size=0.5,
         geom_line(data=data, aes(x=x,y=y,group=grp.nodes), 
                   size=line.size, alpha = 0.5) +
         geom_point(data=data.points,aes(x=x.points,y=y.points, color=coef.points),
-                   size=3) +
+                   size=points.size) +
         labs(x="",y="",color="", title=title) + 
         scale_color_gradientn(colours=p)+
         coord_fixed(ratio=ratio) + 
         theme_void() +
+        MyTheme +
         theme(plot.title = element_text(hjust=0.5),
-              title = element_text(size=26),
               legend.title = element_blank(),
               axis.title = element_blank(),
-              legend.text = element_text(size=20),
-              legend.key.size = unit(1,"cm"),
+              axis.text.x=element_blank(),
+              axis.text.y=element_blank(),
               legend.key.width = unit(0.5,"cm"))
       
     }
@@ -361,18 +365,18 @@ R_plot_mesh.ggplot = function(mesh, alpha = 1, line.size=0.5,
      geom_line(data=data, aes(x=x,y=y,group=grp.nodes), 
                size=line.size, alpha = 0.5) +
      geom_point(data=data.points,aes(x=x.points,y=y.points, color=coef.points),
-                size=3) +
+                size=points.size) +
      labs(x="",y="",color="", title=title) + 
      scale_color_gradientn(colours=p)+ 
      coord_fixed(ratio=ratio) + 
      theme_void() +
+     MyTheme + 
      theme(plot.title = element_text(hjust=0.5),
-           title = element_text(size=26),
            legend.title = element_blank(),
            axis.title = element_blank(),
-           legend.text = element_text(size=20),
-           legend.key.size = unit(1,"cm"),
-           legend.key.width = unit(0.5,"cm"))
+           axis.text.x=element_blank(),
+           axis.text.y=element_blank(),
+           legend.key.size = unit(1,"cm"))
   
    
    }

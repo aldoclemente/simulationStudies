@@ -26,8 +26,8 @@ nnodes = set$nnodes
 mesh.2D = set$mesh.2D
 FEMbasis.2D = set$FEMbasis.2D
 # from =0 to= pi/den
-den = 3 
-time_locations = seq(from=0.,to=pi/2,length.out=6) # pi/3 ok
+den = 2 
+time_locations = seq(from=0.,to=pi/den,length.out=6) # pi/3 ok
 n_time_locs = length(time_locations)
 # in ../utils.R
 #ND_ = compute_NetworkDist_matrix.time(mesh, 1:nnodes, time_locations)
@@ -41,10 +41,6 @@ for(i in 1:n_time_locs){
   for( j in 1:n_time_locs){
     ND.space.time[(1 +(i-1)*nnodes):(i*nnodes), 
                   (1 +(j-1)*nnodes):(j*nnodes)] = ND.space.only
-    print(dim(ND.space.time[(1 +(i-1)*nnodes):(i*nnodes), 
-                            (1 +(j-1)*nnodes):(j*nnodes)]))
-    
-    print(c( (1 +(i-1)*nnodes),(i*nnodes),(1 +(j-1)*nnodes),(j*nnodes)))
   }
 }
 # data 
@@ -133,7 +129,7 @@ grid.arrange(grobs = ggplot_list.signal,
 
 dev.off()
 }
-n_sim=1
+n_sim=30
 lambdaS = 10^seq(from=-0.5,to=0.5, length.out=4)
 lambdaT = 10^seq(from=-1,to=1, length.out=4)  
 
@@ -161,6 +157,7 @@ invisible(capture.output(
 
 results$tot.time
 RMSE = results$RMSE
+mean.field.fdaPDE = results$mean.field.fdaPDE
 
 boxplot_RMSE(RMSE, n_data, model_ = c(T,T,F,F),
              names_ = c("fdaPDE","GWR","",""))
@@ -175,22 +172,38 @@ if(!dir.exists("data/")) {
   dir.create("data/")
 }
 
-save(RMSE, n_data, observations, W, betas, file = filename_)
+save(RMSE, 
+     n_data,
+     time_locations,
+     observations, 
+     signal, 
+     field, 
+     imgfile_,
+     mean.field.fdaPDE,
+     FEMbasis, 
+     W, betas, file = filename_)
 
 imgfile = paste(paste("plots",domain,func,date_, sep="-"), ".pdf", sep="")
 
 ##############################################
 
+setwd(paste(getwd(),"/SpaceTimeRegression",sep=""))
+load("data/SpaceTime-ontario-2022-05-14-02_03_58.RData")
 source("SpatialTimePlot.R")
 
 if(!dir.exists("img/")) {
   dir.create("img/")
 }
 
-SpaceTimePlots(imgfile = imgfile,
+SpaceTimePlots(imgfile = imgfile_, 
                time_locations = time_locations,
-               field = field,
-               observations = observations,
-               W = W,
-               RMSE = RMSE,
-               legend.pos.RMSE = c(0.85,0.9))
+               true.field = field,            # f 
+               true.signal = signal,           # f + W beta 
+               mean.field.fdaPDE = mean.field.fdaDPE,
+               observations = observations,          # f + W beta + eps
+               FEMbasis = FEMbasis,
+               n_data = n_data,
+               W =W, betas=betas,
+               RMSE=RMSE,
+               legend.pos.RMSE = "right",
+               line.size=1)
