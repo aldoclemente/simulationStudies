@@ -1,7 +1,9 @@
+library(grid)
 library(gridExtra)
 library(ggplot2)
 library(latex2exp)
 source("../Auxiliary/R_plot_graph.ggplot2.R")
+source("../SpatialRegression-NoCovariate/NoCovariatesCore.R")
 
 SpaceTimePlots <- function(imgfile, 
                            time_locations,
