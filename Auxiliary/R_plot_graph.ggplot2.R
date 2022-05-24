@@ -97,6 +97,7 @@ R_plot_graph.ggplot2.2<-function(FEM,
                                  color.min=min(FEM$coeff), 
                                  color.max=max(FEM$coeff),
                                  ratio = diff(range(mesh$nodes[,1]))/diff(range(mesh$nodes[,2]) ),
+                                 palette = jet.col,
                                  num.color = 128,
                                  a.sym = FALSE,
                                  return.ggplot.object = FALSE,
@@ -132,7 +133,7 @@ R_plot_graph.ggplot2.2<-function(FEM,
     
   }
   
-  p <- jet.col(n=num.color,alpha=0.8)
+  p <- palette(n=num.color,alpha=0.8)
   
   MyTheme <- theme(
     axis.text = element_text(size=(title.size-2)),
@@ -226,6 +227,7 @@ R_plot_mesh.ggplot = function(mesh, alpha = 1, line.size=0.5,
                               color.max=max(mu),
                               title = "",
                               ratio = diff(range(mesh$nodes[,1]))/diff(range(mesh$nodes[,2])),
+                              palette = jet.col,
                               num.col = 128,
                               title.size = 26,
                               legend.pos = "right")
@@ -271,7 +273,7 @@ R_plot_mesh.ggplot = function(mesh, alpha = 1, line.size=0.5,
   
   }else if(is.null(mesh.2D) && !is.null(points_)){
     if(num.col>2){
-     p = jet.col(n=num.col, alpha=0.8)
+     p = palette(n=num.col, alpha=0.8)
     }else{
      p = c("red3", "green4")
     }
@@ -325,7 +327,7 @@ R_plot_mesh.ggplot = function(mesh, alpha = 1, line.size=0.5,
       
     }
   }else{
-   p = jet.col(n=num.col, alpha=0.8)  
+   p = palette(n=num.col, alpha=0.8)  
    
    data=data.frame(x,y,grp.nodes)
    

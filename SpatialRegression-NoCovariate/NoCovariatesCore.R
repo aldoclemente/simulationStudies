@@ -140,8 +140,14 @@ for(j in 1:length(n_data)){
   return(res_)
 }
 
-boxplot_RMSE <- function(RMSE, n_data, model_=c(T,T,T,F),
-                                       names_=c("fdaPDE", "GWR.ND","GWR.ED", "RR.Krig"), legend.pos = "right"){
+boxplot_RMSE <- function(RMSE, n_data, 
+                         model_=c(T,T,T,F),
+                         names_=c("fdaPDE", "GWR.ND","GWR.ED", "RR.Krig"), 
+                         legend.pos = "right", 
+                         title.size = 26,
+                         palette = NULL,
+                         begin = 0.35, # begin palette
+                         end = 0.85 ){ # palette
  
   M = nrow(RMSE[[1]]) #n_sim
   N = ncol(RMSE[[1]]) #length(n_data) 
@@ -176,11 +182,11 @@ boxplot_RMSE <- function(RMSE, n_data, model_=c(T,T,T,F),
   data_ = data.frame(RMSE_=RMSE_, model_ = model.ticks, obs_=obs_)
   
   MyTheme <- theme(
-    axis.text = element_text(size=26),
-    axis.title = element_text(size=26),
-    title = element_text(size=26),
+    axis.text = element_text(size=title.size-2),
+    axis.title = element_text(size=title.size),
+    title = element_text(size=title.size),
     plot.title = element_text(hjust = 0.5),
-    legend.text = element_text(size=24),
+    legend.text = element_text(size=title.size-6),
     legend.key.size = unit(1,"cm"),
     legend.key.height = unit(1,"cm"),
     legend.title = element_blank(),
@@ -189,6 +195,7 @@ boxplot_RMSE <- function(RMSE, n_data, model_=c(T,T,T,F),
   )
   # legend.position = c(0.85,0.85) # in theme
   
+  if(is.null(palette))
   ggplot(data_) + 
     geom_boxplot(aes(x=obs_, y=RMSE_, 
                      #group=interaction(obs_,model_), 
@@ -201,4 +208,37 @@ boxplot_RMSE <- function(RMSE, n_data, model_=c(T,T,T,F),
           axis.ticks.x = element_blank(),
           legend.position = legend.pos)
   
+  else{
+    if(palette=="viridis"){
+    border_col = darken(viridis(n_models, begin=begin,end=end), amount=0.25)
+    }
+    else if(palette=="magma"){
+      border_col = darken(magma(n_models, begin=begin,end=end), amount=0.25)
+    }
+    
+    ggplot(data_) + 
+      geom_boxplot(aes(x=obs_, y=RMSE_, 
+                       #group=interaction(obs_,model_), 
+                       fill=model_,
+                       color=model_))+
+      scale_x_discrete(limits=as.character(n_data))+
+      labs(x="observations", y="",
+           title="RMSE",)+
+      scale_fill_viridis(begin = begin,
+                         end = end,
+                         option = palette, discrete=T) +
+      #scale_color_viridis(begin=begin, 
+      #                    end=end, 
+      #                    option = palette, discrete = T) + 
+      scale_color_manual(values=border_col) +
+      MyTheme + 
+      theme(plot.title=element_text(hjust=0.5),
+            axis.ticks.x = element_blank(),
+            legend.position = legend.pos)
+    
+  }
 }
+
+
+#
+# res  + scale_fill_grey(start = begin, end = end) + scale_color_grey(start=begin, end=end)

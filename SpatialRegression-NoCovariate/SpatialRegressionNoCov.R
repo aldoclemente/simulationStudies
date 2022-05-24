@@ -4,7 +4,7 @@
 ###  locations at nodes  ###
 ############################
 
-setwd("C:/Users/Aldo/Documents/SimulationStudies/SpatialRegression-NoCovariate")
+setwd("SpatialRegression-NoCovariate/")
 library(KrigLinCaution)
 library(plotrix)
 source("../utils.R")
@@ -80,6 +80,12 @@ save(RMSE, field, observations_, n_data, mean.field.fdaPDE, imgfile_, FEMbasis,
 # imgs #
 source("../SpatialRegression-NoCovariate/RegressionNoCovPlots.R")
 
+palette = "magma" # "viridis" "magma
+imgfile_ = paste("img/SpaceRegression-NoCov-",palette,".pdf",sep="")
+
+if(palette == "ggplot")
+  palette=NULL
+
 RegressionNoCovPlots(imgfile = imgfile_,
                      true.field = field, 
                      mean.field.fdaPDE = mean.field.fdaPDE,
@@ -87,6 +93,7 @@ RegressionNoCovPlots(imgfile = imgfile_,
                      RMSE = RMSE,
                      FEMbasis = FEMbasis,
                      n_data = n_data,
+                     palette = palette,
                      legend.pos.RMSE = "right",
                      line.size=0.75)
 
