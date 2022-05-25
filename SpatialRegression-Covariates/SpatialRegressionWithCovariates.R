@@ -4,7 +4,7 @@
 ###  locations at nodes  ###
 ############################
 
-setwd("C:/Users/Aldo/Documents/SimulationStudies/SpatialRegression-Covariates")
+setwd("SpatialRegression-Covariates")
 library(plotrix)
 source("../utils.R")
 source("WithCovariatesCore.R")
@@ -32,7 +32,7 @@ set.seed(1234)
 field = fun(func)(ND_,source = 63, sigma=2) #f(ND_,source = 1760, sigma=2)  #63 350
 plot(FEM(field, FEMbasis))
 
-# Test 1 estevan exp (source=63, sigma = 2) # NB estevan è sempre test 1 per salvataggio dati 
+# Test 1 estevan exp (source=63, sigma = 2) # NB estevan ? sempre test 1 per salvataggio dati 
 sample.idx =c(2378, 1271, 1802, 1529, 2693)
 field = fun(func)(ND_,source = 63, sigma=2)
 field.2 = fun(func)(ND_,source = sample.idx[1], sigma=1.5)
@@ -119,8 +119,14 @@ save(RMSE,
 
 
 ####
-setwd("C:/Users/Aldo/Documents/SimulationStudies/SpatialRegression-Covariates")
+setwd("../SpatialRegression-Covariates")
 source("RegressionWithCovPlots.R")
+
+palette = "magma" # "viridis" "magma
+imgfile_ = paste("img/SpaceRegression-WithCov-",palette,".pdf",sep="")
+
+if(palette == "ggplot")
+  palette=NULL
 
 RegressionWithCovPlots(imgfile=imgfile_,
                        true.field=field,            # f 
@@ -131,5 +137,6 @@ RegressionWithCovPlots(imgfile=imgfile_,
                        n_data=n_data,
                        W=W , betas=betas,
                        RMSE,legend.pos.RMSE = "right",
+                       palette=palette,
                        line.size=0.5)
 

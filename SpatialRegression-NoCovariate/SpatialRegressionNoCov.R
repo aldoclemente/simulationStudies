@@ -95,7 +95,7 @@ RegressionNoCovPlots(imgfile = imgfile_,
                      n_data = n_data,
                      palette = palette,
                      legend.pos.RMSE = "right",
-                     line.size=0.75)
+                     line.size=0.5)
 
 
 

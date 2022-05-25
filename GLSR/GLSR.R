@@ -4,7 +4,7 @@
 ###  locations at nodes  ###
 ############################
 
-setwd("C:/Users/Aldo/Documents/SimulationStudies/GLSR")
+setwd("../GLSR")
 library(plotrix)
 library(purrr)
 source("../utils.R")
@@ -62,6 +62,7 @@ betas = c(1.,1.)
 
 signal = field + W%*%betas
 param = signal + rnorm(nnodes, mean=0, sd=0.05*diff(range(signal)))
+param = signal 
 lambda = 10^seq(from=0,to=2,length.out=25)
 lambda.2D = NULL
 ####
@@ -120,10 +121,20 @@ save(RMSE,
      param,  # f + W beta + eps 
      response, # observations
      mean.field.fdaPDE,
+     FEMbasis,
      W,
      betas, 
      file = filename_)
 
+
+
+
+
+palette = "ggplot" # "viridis" "magma
+imgfile_ = paste("img/GLSR-",palette,".pdf",sep="")
+
+if(palette == "ggplot")
+  palette=NULL
 if(is.null(W)){ 
 source("GLRNoCovPlots.R")
 GLRNoCovPlots(imgfile,
@@ -132,7 +143,7 @@ GLRNoCovPlots(imgfile,
              RMSE,legend.pos.RMSE = c(0.85, 0.85))
 }else{
 # # # img with cov # # # 
-source("GLSRWithCovPlots.R") # è esattamente la stessa... interessant
+source("GLSRWithCovPlots.R") # ? esattamente la stessa... interessant
 GLRWithCovPlots(imgfile=imgfile_,
               true.field=field,
               true.signal = signal,
@@ -143,10 +154,17 @@ GLRWithCovPlots(imgfile=imgfile_,
               n_data = n_data,
               W=W, betas=betas,
               RMSE,legend.pos.RMSE = "right",
-              line.size = 1)
+              palette=palette,
+              line.size = 0.5)
 }
 
 source("../SpatialRegression-Covariates/RegressionWithCovPlots.R")
+
+palette = "viridis" # "viridis" "magma
+imgfile_ = paste("img/GLSR-",palette,".pdf",sep="")
+
+if(palette == "ggplot")
+  palette=NULL
 
 RegressionWithCovPlots(imgfile="img/prova.pdf",
                 true.field=field,
@@ -158,4 +176,5 @@ RegressionWithCovPlots(imgfile="img/prova.pdf",
                 n_data = n_data,
                 W=W, betas=betas,
                 RMSE,legend.pos.RMSE = "right",
-                line.size = 1)
+                palette=palette,
+                line.size = 0.5)
