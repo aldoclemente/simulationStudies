@@ -204,23 +204,34 @@ imgfile = paste(paste("plots",domain,func,date_, sep="-"), ".pdf", sep="")
 
 ##############################################
 
-setwd(paste(getwd(),"/SpaceTimeRegression",sep=""))
-load("data/SpaceTime-ontario-2022-05-14-02_03_58.RData")
-source("SpatialTimePlot.R")
+setwd(paste("../SpaceTimeGLR",sep=""))
 
 if(!dir.exists("img/")) {
   dir.create("img/")
 }
 
-SpaceTimePlots(imgfile = imgfile_, 
-               time_locations = time_locations,
-               true.field = field,            # f 
-               true.signal = signal,           # f + W beta 
-               mean.field.fdaPDE = mean.field.fdaDPE,
-               observations = observations,          # f + W beta + eps
-               FEMbasis = FEMbasis,
-               n_data = n_data,
-               W =W, betas=betas,
-               RMSE=RMSE,
-               legend.pos.RMSE = "right",
-               line.size=1)
+palette = "ggplot" # "viridis" "magma
+imgfile_ = paste("img/SpaceTimeGLR-",palette,".pdf",sep="")
+
+if(palette == "ggplot")
+  palette=NULL
+
+
+rmse <- boxplot_RMSE(RMSE=RMSE,
+             n_data=n_data,
+             model=c(T,F,F,F),names_ = c("GST-PDE","","",""),
+             palette=palette,begin=0.65,end=0.65)
+
+pdf(imgfile_)
+print(rmse)
+dev.off()
+
+source("../SpaceTimeRegression/SpaceTimePlotLoop.R")
+imgfile.loop = paste("img/SpaceTimeGLR-Loop-",palette,".pdf",sep="")
+SpaceTimeLoop(imgfile = imgfile.loop,
+              FEMbasis = FEMbasis,
+              time_locations = time_locations,
+              field = field,
+              mean.field.fdaPDE = mean.field.fdaPDE,
+              palette =palette,
+              line.size=0.5)

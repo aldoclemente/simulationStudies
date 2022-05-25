@@ -2,6 +2,7 @@ library(grid)
 library(gridExtra)
 library(ggplot2)
 library(latex2exp)
+library(viridis)
 source("../Auxiliary/R_plot_graph.ggplot2.R")
 source("../SpatialRegression-NoCovariate/NoCovariatesCore.R")
 
@@ -15,7 +16,17 @@ SpaceTimePlots <- function(imgfile,
                            n_data,
                            W , betas,
                            RMSE,legend.pos.RMSE = "right",
+                           palette = NULL,
                            line.size=1){
+  
+  if(!is.null(palette)){
+    if(palette=="viridis")
+      p=viridis
+    else if(palette=="magma")
+      p=magma
+  }else{
+    p=jet.col
+  }
 
   col.min = min(field, mean.field.fdaPDE)
   col.max = max(field, mean.field.fdaPDE)
@@ -61,6 +72,7 @@ SpaceTimePlots <- function(imgfile,
                                                title = title_,
                                                return.ggplot.object = T,
                                                legend.pos = "right",
+                                               palette = p,
                                                title.size = 16) 
     
     true.spatial.signal[[i]] <- R_plot_graph.ggplot2.2(FEM(coef.signal[,i], FEMbasis),
@@ -70,6 +82,7 @@ SpaceTimePlots <- function(imgfile,
                                                       color.min = min(coef.signal),
                                                       return.ggplot.object = T,
                                                       legend.pos = "right",
+                                                      palette = p,
                                                       title.size = 16)
     
     mean.field.fdaPDE.1[[i]] <- R_plot_graph.ggplot2.2(FEM(coef.mean.1[,i], FEMbasis),
@@ -79,6 +92,7 @@ SpaceTimePlots <- function(imgfile,
                                                        title = title_,
                                                        return.ggplot.object = T,
                                                        legend.pos = "right",
+                                                       palette = p,
                                                        title.size = 16)
     
     mean.field.fdaPDE.2[[i]] <- R_plot_graph.ggplot2.2(FEM(coef.mean.2[,i], FEMbasis),
@@ -88,6 +102,7 @@ SpaceTimePlots <- function(imgfile,
                                                        title = title_,
                                                        return.ggplot.object = T,
                                                        legend.pos = "right",
+                                                       palette = p,
                                                        title.size = 16)
     
     mean.field.fdaPDE.3[[i]] <- R_plot_graph.ggplot2.2(FEM(coef.mean.3[,i], FEMbasis),
@@ -97,6 +112,7 @@ SpaceTimePlots <- function(imgfile,
                                                        title = title_,
                                                        return.ggplot.object = T,
                                                        legend.pos = "right",
+                                                       palette = p,
                                                        title.size = 16)
     
     mean.field.fdaPDE.4[[i]] <- R_plot_graph.ggplot2.2(FEM(coef.mean.4[,i], FEMbasis),
@@ -106,11 +122,13 @@ SpaceTimePlots <- function(imgfile,
                                                        title = title_,
                                                        return.ggplot.object = T,
                                                        legend.pos = "right",
+                                                       palette = p,
                                                        title.size = 16)
   }  
   
 rmse <- boxplot_RMSE(RMSE, n_data, model_ = c(T,T,F,F), 
-             names_ = c("fdaPDE","GWR","",""),
+             names_ = c("ST-PDE","GTWR","",""),
+             palette = palette,
              legend.pos = legend.pos.RMSE)
 
 ### obs ###
@@ -137,6 +155,7 @@ observations.example.1[[i]] = R_plot_mesh.ggplot(mesh = FEMbasis$mesh,
                                                     line.size=line.size,
                                                     title = TeX(sprintf("$t = %f", round(time_locations[i],digits = 2))),
                                                  title.size = 16,
+                                                 palette = p,
                                                  points.size = 0.25)
 }
 
@@ -157,6 +176,7 @@ for( i in 1:n.locs.time){
                                                     line.size=line.size,
                                                     title = TeX(sprintf("$t = %f", round(time_locations[i],digits = 2))),
                                                    title.size = 16,
+                                                   palette = p,
                                                    points.size = 0.25)
 }
 
@@ -177,6 +197,7 @@ for( i in 1:n.locs.time){
                                                     line.size=line.size,
                                                     title = TeX(sprintf("$t = %f", round(time_locations[i],digits = 2))),
                                                    title.size = 16,
+                                                   palette = p,
                                                    points.size = 0.25)
 }
 
@@ -197,18 +218,20 @@ for( i in 1:n.locs.time){
                                                     line.size=line.size,
                                                     title = TeX(sprintf("$t = %f", round(time_locations[i],digits = 2))),
                                                    title.size = 16,
+                                                   palette = p,
                                                    points.size = 0.25)
 }
 
 ###########
 firstCov <- R_plot_graph.ggplot2.2(FEM(W[1:nnodes,1], FEMbasis),
                                    line.size = line.size,
-                                   title = "First Covariate", #expression(hat(f) ~ paste("(n=",n_data[1],")",sep="")),
+                                   title = bquote(N(0,0.25^2)), #expression(hat(f) ~ paste("(n=",n_data[1],")",sep="")),
                                    return.ggplot.object = T, 
                                    legend.pos = "right")
 secondCov <- R_plot_graph.ggplot2.2(FEM(W[1:nnodes,2], FEMbasis),
                                     line.size = line.size,
-                                    title = "Second Covariate",
+                                    title = "sinusoidal function",
+                                    palette = p,
                                     return.ggplot.object = T, 
                                     legend.pos = "right")
 
@@ -217,12 +240,14 @@ points_ = mesh$nodes[sample_,]
 firstCov.example.1 <- R_plot_mesh.ggplot(mesh = mesh,
                                          points_ = points_, 
                                          mu = W[sample_,1], 
+                                         palette = p,
                                          title = paste("First Covariate",
                                                        "(n=",n_data[1],")",sep=""))
 
 secondCov.example.1 <- R_plot_mesh.ggplot(mesh = mesh,
                                           points_ = points_, 
                                           mu = W[sample_,2],
+                                          palette = p,
                                           title = paste("Second Covariate",
                                                         "(n=",n_data[1],")",sep=""))
 
@@ -231,12 +256,14 @@ points_ = mesh$nodes[sample_,]
 firstCov.example.2 <- R_plot_mesh.ggplot(mesh = mesh,
                                          points_ = points_, 
                                          mu = W[sample_,1], 
+                                         palette = p,
                                          title = paste("First Covariate",
                                                        "(n=",n_data[2],")",sep=""))
 
 secondCov.example.2 <- R_plot_mesh.ggplot(mesh = mesh,
                                           points_ = points_, 
                                           mu = W[sample_,2],
+                                          palette = p,
                                           title = paste("Second Covariate",
                                                         "(n=",n_data[2],")",sep=""))
 
@@ -245,12 +272,14 @@ points_ = mesh$nodes[sample_,]
 firstCov.example.3 <- R_plot_mesh.ggplot(mesh = mesh,
                                          points_ = points_, 
                                          mu = W[sample_,1], 
+                                         palette = p,
                                          title = paste("First Covariate",
                                                        "(n=",n_data[3],")",sep=""))
 
 secondCov.example.3 <- R_plot_mesh.ggplot(mesh = mesh,
                                           points_ = points_, 
                                           mu = W[sample_,2],
+                                          palette = p,
                                           title = paste("Second Covariate",
                                                         "(n=",n_data[3],")",sep=""))
 
@@ -259,12 +288,14 @@ points_ = mesh$nodes[sample_,]
 firstCov.example.4 <- R_plot_mesh.ggplot(mesh = mesh,
                                          points_ = points_, 
                                          mu = W[sample_,1], 
+                                         palette = p,
                                          title = paste("First Covariate",
                                                        "(n=",n_data[4],")",sep=""))
 
 secondCov.example.4 <- R_plot_mesh.ggplot(mesh = mesh,
                                           points_ = points_, 
                                           mu = W[sample_,2],
+                                          palette = p,
                                           title = paste("Second Covariate",
                                                         "(n=",n_data[4],")",sep=""))
 
@@ -322,5 +353,7 @@ print(secondCov.example.2)
 print(secondCov.example.3)
 print(secondCov.example.4)
 dev.off()
+
+
 
 }

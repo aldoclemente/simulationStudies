@@ -130,7 +130,7 @@ save(RMSE,
 
 
 
-palette = "ggplot" # "viridis" "magma
+palette = "magma" # "viridis" "magma
 imgfile_ = paste("img/GLSR-",palette,".pdf",sep="")
 
 if(palette == "ggplot")

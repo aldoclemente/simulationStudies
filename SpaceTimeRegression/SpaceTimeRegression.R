@@ -195,6 +195,12 @@ if(!dir.exists("img/")) {
   dir.create("img/")
 }
 
+palette = "viridis" # "viridis" "magma
+imgfile_ = paste("img/SpaceTimeRegression-",palette,".pdf",sep="")
+
+if(palette == "ggplot")
+  palette=NULL
+
 SpaceTimePlots(imgfile = imgfile_, 
                time_locations = time_locations,
                true.field = field,            # f 
@@ -206,4 +212,14 @@ SpaceTimePlots(imgfile = imgfile_,
                W =W, betas=betas,
                RMSE=RMSE,
                legend.pos.RMSE = "right",
-               line.size=1)
+               palette = palette,
+               line.size=0.5)
+
+imgfile.loop = paste("img/SpaceTimeRegression-Loop-",palette,".pdf",sep="")
+SpaceTimeLoop(imgfile = imgfile.loop,
+              FEMbasis = FEMbasis,
+              time_locations = time_locations,
+              field = field,
+              mean.field.fdaPDE = mean.field.fdaDPE,
+              palette =palette,
+              line.size=0.5)
