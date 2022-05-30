@@ -97,7 +97,14 @@ RegressionNoCovPlots(imgfile = imgfile_,
                      legend.pos.RMSE = "right",
                      line.size=0.5)
 
+colors = viridis(n=4, begin=0.95, end=0.25)
 
+pdf("img/RMSE-NoCov.pdf")
+boxplot_RMSE(RMSE, n_data, model_ = c(T,T,T,T), 
+             names_ = c("SR-PDE","GWR","Lattice","RR-Krig"),
+             legend.pos = c(0.825,0.8625), palette=palette,
+             colors=colors)
+dev.off()
 
 
 

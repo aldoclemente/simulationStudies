@@ -178,3 +178,12 @@ RegressionWithCovPlots(imgfile="img/prova.pdf",
                 RMSE,legend.pos.RMSE = "right",
                 palette=palette,
                 line.size = 0.5)
+
+colors = viridis(n=2, begin=0.95, end=0.25)
+pdf("img/RMSE-GSR.pdf")
+boxplot_RMSE(RMSE, n_data, model_ = c(T,T,F,F), 
+             names_ = c("SR-PDE","GWR","",""),
+             legend.pos = c(0.825,0.8625), palette=palette,
+             colors=colors)
+dev.off()
+

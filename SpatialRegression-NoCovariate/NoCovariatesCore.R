@@ -147,7 +147,9 @@ boxplot_RMSE <- function(RMSE, n_data,
                          title.size = 26,
                          palette = NULL,
                          begin = 0.35, # begin palette
-                         end = 0.85 ){ # palette
+                         end = 0.85, 
+                         colors = NULL,
+                         ylim =NULL){ # palette
  
   M = nrow(RMSE[[1]]) #n_sim
   N = ncol(RMSE[[1]]) #length(n_data) 
@@ -194,7 +196,7 @@ boxplot_RMSE <- function(RMSE, n_data,
                                      size=c(1,0.5))
   )
   # legend.position = c(0.85,0.85) # in theme
-  
+  if(is.null(colors)){
   if(is.null(palette))
   ggplot(data_) + 
     geom_boxplot(aes(x=obs_, y=RMSE_, 
@@ -237,6 +239,31 @@ boxplot_RMSE <- function(RMSE, n_data,
             legend.position = legend.pos)
     
   }
+  }else{
+    if(length(colors)!= n_models)
+      stop("length(colors) must be equal to n_models! ")
+    border_col = darken(col=colors, amount = 0.25)
+    tmp <- ggplot(data_) + 
+      geom_boxplot(aes(x=obs_, y=RMSE_, 
+                       #group=interaction(obs_,model_), 
+                       fill=model_,
+                       color=model_))+
+      scale_x_discrete(limits=as.character(n_data))+
+      labs(x="observations", y="",
+           title="RMSE",)+
+      scale_fill_manual(values = colors) + 
+      scale_color_manual(values=border_col) +
+      MyTheme + 
+      theme(plot.title=element_text(hjust=0.5),
+            axis.ticks.x = element_blank(),
+            legend.position = legend.pos)
+    
+    if(!is.null(ylim))
+      tmp <- tmp + coord_cartesian(ylim =ylim)
+  
+    tmp
+  }
+  
 }
 
 

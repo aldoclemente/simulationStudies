@@ -235,3 +235,10 @@ SpaceTimeLoop(imgfile = imgfile.loop,
               mean.field.fdaPDE = mean.field.fdaPDE,
               palette =palette,
               line.size=0.5)
+colors = viridis(n=1, begin=0.25, end=0.25)
+pdf("img/RMSE-ST-PDE.pdf")
+boxplot_RMSE(RMSE, n_data, model_ = c(T,F,F,F), 
+             names_ = c("SR-PDE","","",""),
+             legend.pos = c(0.825,0.8625), palette=palette,
+             colors=colors )
+dev.off()
