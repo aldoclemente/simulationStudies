@@ -64,6 +64,29 @@ as.fdaPDE.SpatialLinesDataFrame <- function(SpLinesDf){
   return(mesh)
 }
 
+#' Utility to convert SpatialLinesDataFrame into fdaPDE Linear Network mesh. 
+#' It is used to solve GWR, GGWR or Kriging over Linear Networks.
+#' @param SpLinesDf, SpatialLinesDataFrame
+#' 
+#' @return mesh, It contains the length of each edges in the network.
+#'   
+as.fdaPDE.SpatialLinesDataFrame.shp2graph<-function(SpLinesDf){
+  
+  rt.NEL = readshpnw(SpLinesDf, 
+                    ELComputed = TRUE,
+                    Detailed = TRUE,
+                    ea.prop = names(SpLinesDf))
+  g = nel2igraph(nodelist = rt.NEL[[2]], 
+                 edgelist = rt.NEL[[3]],
+                 weight   = rt.NEL[[4]])
+  
+  DataFrame = as_data_frame(g, what="both")
+  mesh = create.mesh.1.5D(nodes = as.matrix(DataFrame$vertices),
+                          edges = as.matrix(DataFrame$edges[,1:2]))
+
+  return(mesh)
+}
+
 fdaPDEnodes2Spnodes<-function(mesh.fdaPDE, sp.edges){
   
   fdaPDE.edges = mesh.fdaPDE$edges

@@ -230,7 +230,8 @@ R_plot_mesh.ggplot = function(mesh, alpha = 1, line.size=0.5,
                               palette = jet.col,
                               num.col = 128,
                               title.size = 26,
-                              legend.pos = "right")
+                              legend.pos = "right",
+                              line.color="black")
   {
   
   x=vector(mode="double")
@@ -259,7 +260,7 @@ R_plot_mesh.ggplot = function(mesh, alpha = 1, line.size=0.5,
   
   ggplot(data=data, aes(x=x,y=y,group=grp.nodes)) + 
     geom_point(alpha=0.0) + 
-    geom_line(size=line.size)+
+    geom_line(size=line.size, color=line.color)+
     labs(x="",y="",color="", title=title) +  
     coord_fixed(ratio=ratio) + 
     theme_void() +
@@ -292,7 +293,7 @@ R_plot_mesh.ggplot = function(mesh, alpha = 1, line.size=0.5,
       geom_line(data=data, aes(x=x,y=y,group=grp.nodes), 
                 size=line.size, alpha = 0.5) +
       geom_point(data=data.points,aes(x=x.points,y=y.points, color=coef.points),
-                 size=3) +
+                 size=points.size) +
       labs(x="",y="",color="", title=title) + 
       scale_color_gradientn(colours=p, limits = c(color.min, color.max))+ 
       coord_fixed(ratio=ratio) + 
