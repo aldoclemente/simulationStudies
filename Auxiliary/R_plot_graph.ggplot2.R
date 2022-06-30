@@ -258,7 +258,7 @@ R_plot_mesh.ggplot = function(mesh, alpha = 1, line.size=0.5,
 
   data=data.frame(x,y,grp.nodes)
   
-  ggplot(data=data, aes(x=x,y=y,group=grp.nodes)) + 
+  ret <- ggplot(data=data, aes(x=x,y=y,group=grp.nodes)) + 
     geom_point(alpha=0.0) + 
     geom_line(size=line.size, color=line.color)+
     labs(x="",y="",color="", title=title) +  
@@ -271,7 +271,7 @@ R_plot_mesh.ggplot = function(mesh, alpha = 1, line.size=0.5,
           axis.text.x=element_blank(),
           axis.text.y=element_blank(),
           legend.key.width = unit(0.5,"cm"))
-  
+  return(ret)
   }else if(is.null(mesh.2D) && !is.null(points_)){
     if(num.col>2){
      p = palette(n=num.col, alpha=0.8)

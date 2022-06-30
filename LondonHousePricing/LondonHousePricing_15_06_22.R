@@ -36,6 +36,8 @@ LN.data.adj$DATA.IDX = 1:nrow(LN.data.adj)
 
 # shuffle data
 set.seed(27182) # 31415 # 1234
+
+for( j in 1:10){
 LN.data.adj = LN.data.adj[sample(1:nrow(LN.data.adj)), ]
 
 listData = list()
@@ -47,13 +49,12 @@ for(i in 1:(K-1)){
 }
 listData[[K]] = LN.data.adj[(num_data*(K-1) + 1):nrow(LN.data.adj), ]
 
-tmp = get_Kfold_data(listData,iter=9)
-
-# prova 
-
 RMSE.prediction = list( RMSE.fdaPDE = matrix(0, nrow=K, ncol=1),
                         RMSE.GWR.ND = matrix(0, nrow=K,ncol=1))
+betas =list( beta.fdaPDE = matrix(0,nrow=K, ncol=3),
+             beta.GWR = matrix(0,nrow=K, ncol=3))
 
+mean.field.estimate = matrix(0,nrow=nrow(mesh$nodes), ncol=1)
 
 start=Sys.time()
 for(i in 1:K){
@@ -87,7 +88,7 @@ for(i in 1:K){
   W = cbind( train_data$FLOORSZ, 
              train_data$PROF,   #, 
              train_data$BATH2) #, 
-  lambda = 10^seq(from=0.5,to=2.5,by=0.0725) #28
+  lambda = 10^seq(from=0.5,to=2.5,by=0.0725)[16:28] #28
   output_CPP = smooth.FEM(observations = observations, 
                           locations = locs,
                           FEMbasis = FEMbasis,
@@ -110,10 +111,18 @@ for(i in 1:K){
     beta3*test_data$BATH2 +
     eval.FEM(output_CPP$fit.FEM, locs_pred)
   RMSE.prediction$RMSE.fdaPDE[i] = sqrt(mean( (prediction - test_data$PURCHASE)^2 ) )
-  
+  mean.field.estimate = mean.field.estimate + output_CPP$fit.FEM$coeff / K
+  betas$beta.fdaPDE[i,] = c(beta1, beta2, beta3)
 }
 end = difftime(Sys.time(), start, units="hours")
 tot.time = end
 
-filename = paste("fdaPDE_vs_GWR-", gsub(":","_",gsub(" ","-",Sys.time())), ".RData",sep="")
-save(tot.time, RMSE.prediction, file=filename)
+if(!dir.exists("data/")) {
+  dir.create("data/")
+}
+
+filename = paste("data/LondonHousePrice-", gsub(":","_",gsub(" ","-",Sys.time())), ".RData",sep="")
+save(tot.time, RMSE.prediction, betas,
+     mean.field.estimate, 
+     FEMbasis, file=filename)
+}
