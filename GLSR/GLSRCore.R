@@ -49,6 +49,7 @@ gamCore <- function(ND_, ED_, observations_,
   if(model_[3]) RMSE.GWR.ED  = matrix(0,nrow=n_sim, ncol=length(n_data))
   if(model_[4]) RMSE.fdaPDE.2D = matrix(0,nrow=n_sim, ncol=length(n_data))
   
+  estimates = list()
   
   nnodes = nrow(ND_)
   mean.field.fdaPDE = matrix(0,nrow=nnodes, ncol=length(n_data))
@@ -64,6 +65,14 @@ gamCore <- function(ND_, ED_, observations_,
       
       ND = ND_[sample_, sample_]
       ED = ED_[sample_, sample_]
+      
+      if(i==1 && j == 1){ 
+        estimates$locations = locations
+        estimates$observations = observations
+        estimates$true.signal = inv.link(true.signal[sample_])
+        estimates$X1 = W[sample_,1]
+        estimates$X2 = W[sample_,2]
+      }
       
       if(is.null(W)){
       ### fdaPDE ### 
@@ -83,6 +92,13 @@ gamCore <- function(ND_, ED_, observations_,
                               locations = locations))
         RMSE.fdaPDE[i,j] = rmse(inv.link(true.signal[sample_]), prediction)
         mean.field.fdaPDE[,j] = mean.field.fdaPDE[,j] + output_CPP$solution$f / n_sim
+        if(i==1 && j == 1){ 
+          estimates$fdaPDE = prediction 
+        }
+        
+        
+        
+        
       }
       ### GWR ### 
       
@@ -106,6 +122,11 @@ gamCore <- function(ND_, ED_, observations_,
                            bw = bw.ND,
                            dMat = ND)
         RMSE.GWR.ND[i,j] = rmse(GWR.ND$SDF$yhat, inv.link(true.signal[sample_]))
+        
+        
+        if(i==1 && j == 1){ 
+          estimates$GWR = GWR.ND$SDF$yhat 
+        }
       }
       # ED
       if(model_[3]){
@@ -163,7 +184,12 @@ gamCore <- function(ND_, ED_, observations_,
                        + W[sample_,]%*%output_CPP$solution$beta[,output_CPP$optimization$lambda_position])
           RMSE.fdaPDE[i,j] = rmse(inv.link(true.signal[sample_]), prediction)
           mean.field.fdaPDE[,j] = mean.field.fdaPDE[,j] + output_CPP$solution$f[,output_CPP$optimization$lambda_position] / n_sim
-        }
+        
+          if(i==1 && j == 1){ 
+            estimates$fdaPDE = prediction 
+          }
+          
+          }
         ### GWR ### 
         
         data_ = data.frame(observations = observations,
@@ -187,6 +213,10 @@ gamCore <- function(ND_, ED_, observations_,
                               bw = bw.ND,
                               dMat = ND)
           RMSE.GWR.ND[i,j] = rmse(GWR.ND$SDF$yhat, inv.link(true.signal[sample_]))
+          
+          if(i==1 && j == 1){ 
+            estimates$GWR = GWR.ND$SDF$yhat 
+          }
         }
         # ED
         if(model_[3]){
@@ -237,6 +267,6 @@ gamCore <- function(ND_, ED_, observations_,
                RMSE.GWR.ED  = RMSE.GWR.ED,
                RMSE.fdaPDE.2D = RMSE.fdaPDE.2D)
   
-  res_ = list(RMSE = RMSE, tot.time=tot.time, mean.field.fdaPDE=mean.field.fdaPDE)
+  res_ = list(RMSE = RMSE, tot.time=tot.time, mean.field.fdaPDE=mean.field.fdaPDE, estimates=estimates)
   return(res_)
 }

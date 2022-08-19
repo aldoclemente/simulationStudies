@@ -13,7 +13,18 @@ source("GLSRCore.R")
 #source("plots.R")
 source("../Auxiliary/R_plot_graph.ggplot2.R")
 source("settings.R")
-
+{
+ pdf("img/networks.pdf")  
+ set = setting(network = "estevan")
+ #estevan <- R_plot_mesh.ggplot(set$mesh, line.size = 0.65)
+ plot(set$mesh, type="n")
+ set = setting(network = "ontario")
+ #ontario <-R_plot_mesh.ggplot(set$mesh, line.size = 0.65)
+ plot(set$mesh, type="n")
+ #estevan
+ #ontario
+ dev.off()
+}
 func = "exp" # 'exp' 'sin', see settings.R
 domain = "ontario" # 'estevan' 'ontario', see settings.R
 
@@ -97,10 +108,12 @@ invisible(capture.output(
 results$tot.time
 RMSE = results$RMSE
 mean.field.fdaPDE=results$mean.field.fdaPDE
+estimates = results$estimates
 boxplot_RMSE(RMSE, n_data, model_ = c(T,T,F,F),
              names_ = c("fdaPDE","GWR","",""))
 
-
+head = "estimates"
+tail_ = "method"
 date_ = gsub(":","_",gsub(" ","-",Sys.time()))
 
 if(domain=="estevan"){
@@ -122,6 +135,7 @@ save(RMSE,
      response, # observations
      mean.field.fdaPDE,
      FEMbasis,
+     estimates,
      W,
      betas, 
      file = filename_)

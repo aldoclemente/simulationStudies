@@ -266,3 +266,19 @@ as.lattice.fdaPDE<-function(mesh){
   
   return(out)
 }
+
+#' Utility to convert fdaPDE Linear Network mesh into spatstat linnet. 
+#' @param mesh, fdaPDE Linear Network mesh
+#' 
+#' @return SpatialLinesDf, It contains the length of each edges in the network.
+#'   
+as.spatstat.linnet.fdaPDE <- function(mesh){
+  
+  vertices = ppp(x = mesh$nodes[,1], 
+                 y = mesh$nodes[,2], 
+                 window = owin(xrange = c(min(mesh$nodes[,1]),max(mesh$nodes[,1])),
+                               yrange = c(min(mesh$nodes[,2]),max(mesh$nodes[,2]))))
+  spat.stat.linnet = linnet(vertices = vertices, edges = mesh$edges)
+ 
+ return(spat.stat.linnet)
+}

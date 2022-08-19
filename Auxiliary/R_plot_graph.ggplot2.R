@@ -291,7 +291,7 @@ R_plot_mesh.ggplot = function(mesh, alpha = 1, line.size=0.5,
       geom_point(data=data, aes(x=x,y=y,group=grp.nodes), 
                  alpha=0.0) + 
       geom_line(data=data, aes(x=x,y=y,group=grp.nodes), 
-                size=line.size, alpha = 0.5) +
+                size=line.size) +
       geom_point(data=data.points,aes(x=x.points,y=y.points, color=coef.points),
                  size=points.size) +
       labs(x="",y="",color="", title=title) + 
