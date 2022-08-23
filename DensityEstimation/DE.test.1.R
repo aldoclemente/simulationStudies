@@ -16,7 +16,7 @@ nnodes = sett$nnodes
 spat.stat.linnet = sett$spat.stat.linnet
 
 # point pattern #
-n = 100
+n = 25
 set.seed(1234)
 DENSITY = linfun(auxiliary, spat.stat.linnet)
 
@@ -43,35 +43,38 @@ rmse[,1] = sqrt(mean((true.density - exp(DE_PDE$g))^2 ))
 plot(FEM(true.density, FEMbasis))
 plot(FEM(exp(DE_PDE$g), FEMbasis))
 
-# KDE-PDE # DOES NOT WORK 
-# bw = bw.lppl(X = PP)
-# KDE_PDE = densityHeat.lpp(x = PP, sigma = bw) 
+# spatstat returns the INTENSITY function. 
+# The estimation of DENSITY or INTENSITY is equivalent, if n is fixed,
+# INTENSITY(p) = n DENSITY(p) for all p. 
 
-# rmse[,2] = sqrt(mean(true.density - ))
+# See 
+# McSwiggan, Greg, Adrian Baddeley, and Gopalan Nair. 
+# "Kernel density estimation on a linear network." 
+# Scandinavian Journal of Statistics 44.2 (2017): 324-345.
 
-# KDE-ES # return the INTENSITY FUNCTION ...
+
+# KDE-PDE  
 bw = bw.lppl(X = PP)
-KDE_ES = densityEqualSplit(x = PP, sigma = bw, )
+KDE_PDE = densityHeat(x = as.lpp(PP), sigma = as.numeric(bw)) 
 
-ND = crossdist()
-rmse[,3] = sqrt(mean( (true.density - as.linfun(KDE_ES)(mesh$nodes[,1], mesh$nodes[,2]))^2 ) )
+rmse[,2] = sqrt(mean( (true.density - as.linfun(KDE_PDE)(mesh$nodes[,1], mesh$nodes[,2])/n)^2 ))
+
+# KDE-ES 
+bw = bw.lppl(X = PP)
+KDE_ES = densityEqualSplit(x = PP, sigma = bw)
+
+rmse[,3] = sqrt(mean( (true.density - as.linfun(KDE_ES)(mesh$nodes[,1], mesh$nodes[,2])/n)^2 ))
 
 # KDE-2D
 bw = bw.scott(X = PP)
-KDE_2D = densityQuick.lpp(X = PP, sigma = bw, at = points)
+KDE_2D = densityQuick.lpp(X = PP, sigma = bw) #, at = points)
 
-KDE_2D_density <- KDE_2D / sum(Mass %*% as.linfun(KDE_2D)(mesh$nodes[,1], mesh$nodes[,2])) # Così la normalizzi...
+rmse[,4] = sqrt(mean( (true.density - as.linfun(KDE_2D)(mesh$nodes[,1], mesh$nodes[,2])/n)^2 ) )
 
-#pixarea <- with(KDE_2D, KDE_2D$xstep * KDE_2D$ystep)
-#KDE_2D_density <- KDE_2D * 128 * pixarea
-
-rmse[,4] = sqrt(mean( (true.density - as.linfun(KDE_2D_density)(mesh$nodes[,1], mesh$nodes[,2]))^2 ) )
-
-plot(KDE_2D)
 # KDE-VORONOI #
 bw = bw.voronoi(X = PP) 
 KDE_VORONOI = densityVoronoi(X = PP, sigma = bw)
-rmse[,5] = sqrt(mean( (true.density - as.linfun(KDE_VORONOI)(mesh$nodes[,1], mesh$nodes[,2]))^2 ) )
+rmse[,5] = sqrt(mean( (true.density - as.linfun(KDE_VORONOI)(mesh$nodes[,1], mesh$nodes[,2])/n)^2 ) )
 
 
 
