@@ -282,3 +282,18 @@ as.spatstat.linnet.fdaPDE <- function(mesh){
  
  return(spat.stat.linnet)
 }
+
+#' Utility to convert fdaPDE Linear Network mesh into spatstat linnet. 
+#' @param mesh, fdaPDE Linear Network mesh
+#' 
+#' @return SpatialLinesDf, It contains the length of each edges in the network.
+#'   
+as.fdaPDE.spatstat.linnet <- function(spatstat.linnet){
+  
+  nodes = cbind(spat.stat.linnet$vertices$x, spat.stat.linnet$vertices$y)
+  edges = cbind(spat.stat.linnet$from, spat.stat.linnet$to)
+  
+  mesh = create.mesh.1.5D(nodes, edges)
+  
+  return(mesh)
+}
