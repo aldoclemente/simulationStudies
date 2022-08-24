@@ -39,12 +39,10 @@ get_Kfold_data <- function(dataList, iter, K = 10){
 #' @param FEM, fdaPDE function
 #' @param R0, Mass matrix, NB. R0 = CPP_get.FEM.Mass.Matrix(FEMbasis)
 #' @param data.k, k-th data fold
-#'  
-#' @return SpatialLinesDf, It contains the length of each edges in the network.
-#'   
+#'
 cv_error <- function(FEM, R0, data.k){
   f = FEM$coeff
   f.eval.k = eval.FEM(FEM, locations = cbind(data.k$x, data.k$y))
   
-  return( t(f^2) %*% R0 %*% f^2  - 2*mean(f.eval.k))
+  return( as.numeric( t(f^2) %*% R0 %*% f^2  - 2*mean(f.eval.k)) )
 }

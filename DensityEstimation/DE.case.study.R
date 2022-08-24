@@ -1,12 +1,13 @@
 #################################################
 ############## Density Estimation ###############
-#################  Case Study ###################
+##############   Chicago Crimes   ###############
 #################################################
 graphics.off()
 rm(list=ls())
 
 setwd("DensityEstimation/")
 source("../utils.R")
+source("utils.R")
 source("setting.R")
 
 data("chicago")
@@ -18,7 +19,9 @@ Mass = CPP_get.FEM.Mass.Matrix(FEMbasis)
 
 K = 10
 
-dataList = set_Kfold_data(chicago$data)
+dataList = set_Kfold_data(chicago$data, seed = 0)
+n = nrow(chicago$data)
+
 CV_errors = matrix(0, nrow = K, ncol = 4)
 
 for(i in 1:K){
@@ -28,15 +31,87 @@ for(i in 1:K){
   test_data = tmp$test_data
 
   # DE-PDE 
-  lambda = 10^seq(from=-2, to=1,length.out = 10)
+  lambda = 10^seq(from=4.45, to=4.75,length.out = 20)
   DE_PDE = fdaPDE::DE.FEM(data = cbind(train_data$x, train_data$y), FEMbasis = FEMbasis,
                           lambda = lambda,
-                          preprocess_method ="SimplifiedCV",
+                          preprocess_method ="RightCV",
                           nfolds = 10)
   
-  CV_errors[i,1] = cv_error(FEM = FEM(coeff= exp(DE_PDE$g), FEMbasis), R0 = Mass, data.k = test_data)
+  CV_errors[i,1] = cv_error(FEM = FEM(coeff= exp(DE_PDE$g), FEMbasis), 
+                            R0 = Mass, data.k = test_data)
     
+  # Training Point Pattern over Chicago Road Network
+  PP_train = lpp(X = ppp(x = train_data$x, y = train_data$y, window = chicago$domain$window),
+                 L = chicago$domain)
+  # KDE-PDE
+  bw = bw.lppl(X = PP_train)
+  KDE_PDE = densityHeat(x = PP_train, sigma = as.numeric(bw)) 
+  
+  CV_errors[i,2] = cv_error(FEM = FEM(coeff=as.linfun(KDE_PDE)(mesh$nodes[,1], mesh$nodes[,2])/n, FEMbasis), 
+                            R0 = Mass, data.k = test_data)
+  
+  # KDE-2D
+  bw = bw.scott(X = PP_train)
+  KDE_2D = densityQuick.lpp(X = PP_train, sigma = bw) #, at = points)
+  
+  CV_errors[i,3] = cv_error(FEM = FEM(coeff=as.linfun(KDE_2D)(mesh$nodes[,1], mesh$nodes[,2])/n, FEMbasis), 
+                            R0 = Mass, data.k = test_data)
+  
+  # KDE-VORONOI #
+  bw = bw.voronoi(X = PP_train) 
+  KDE_VORONOI = densityVoronoi(X = PP_train, sigma = bw)
+  
+  CV_errors[i,4] = cv_error(FEM = FEM(coeff=as.linfun(KDE_VORONOI)(mesh$nodes[,1], mesh$nodes[,2])/n, FEMbasis), 
+                            R0 = Mass, data.k = test_data)
   
 }
+
+date_ = gsub(":","_",gsub(" ","-",Sys.time()))
+
+if(!dir.exists("data/")) {
+  dir.create("data/")
+}
+
+save(CV_errors, file = paste("DE_chicago_CV_errors_",date_,".RData", sep=""))
+
+# boxplots CV_errors 
+
+
+# 
+
+DE_PDE = fdaPDE::DE.FEM(data = cbind(chicago$data$x, chicago$data$y), FEMbasis = FEMbasis,
+                        lambda = lambda,
+                        preprocess_method ="RightCV",
+                        nfolds = 10)
+
+DE_PDE.FEM = FEM(coeff= exp(DE_PDE$g), FEMbasis)
+
+# Training Point Pattern over Chicago Road Network
+PP_train = lpp(X = ppp(x = train_data$x, y = train_data$y, window = chicago$domain$window),
+               L = chicago$domain)
+# KDE-PDE
+bw = bw.lppl(X = chicago$data)
+KDE_PDE = densityHeat(x = chicago$data, sigma = as.numeric(bw)) 
+
+KDE_PDE.FEM = FEM(coeff=as.linfun(KDE_PDE)(mesh$nodes[,1], mesh$nodes[,2])/n, FEMbasis)
+
+# KDE-2D
+bw = bw.scott(X = chicago$data)
+KDE_2D = densityQuick.lpp(X = chicago$data, sigma = bw) #, at = points)
+
+KDE_2D.FEM = FEM(coeff=as.linfun(KDE_2D)(mesh$nodes[,1], mesh$nodes[,2])/n, FEMbasis)
+
+# KDE-VORONOI #
+bw = bw.voronoi(X = chicago$data) 
+KDE_VORONOI = densityVoronoi(X = chicago$data, sigma = bw)
+
+KDE_VORONOI.FEM = FEM(coeff=as.linfun(KDE_VORONOI)(mesh$nodes[,1], mesh$nodes[,2])/n, FEMbasis)
+
+save(DE_PDE.FEM, KDE_PDE.FEM, KDE_2D.FEM, KDE_VORONOI.FEM, 
+     file = paste("DE_chicago_estimates_",date_,".RData",sep=""))
+
+# plot
+
+
 
 

@@ -10,7 +10,7 @@ setwd("DensityEstimation/")
 source("../utils.R")
 source("setting.R")
 
-sett = setting("ontario")
+sett = setting("simplenet") # NB. estevan and ontario too much time
 
 mesh = sett$mesh
 FEMbasis = sett$FEMbasis
