@@ -72,13 +72,11 @@ if(!dir.exists("data/")) {
   dir.create("data/")
 }
 
-save(CV_errors, file = paste("DE_chicago_CV_errors_",date_,".RData", sep=""))
+save(CV_errors, date_, file = paste("data/DE_chicago_CV_errors_",date_,".RData", sep=""))
 
-# boxplots CV_errors 
-
-
-# 
-
+# Competing methods
+# DE-PDE
+lambda = 10^seq(from=4.45, to=4.75,length.out = 20)
 DE_PDE = fdaPDE::DE.FEM(data = cbind(chicago$data$x, chicago$data$y), FEMbasis = FEMbasis,
                         lambda = lambda,
                         preprocess_method ="RightCV",
@@ -87,31 +85,29 @@ DE_PDE = fdaPDE::DE.FEM(data = cbind(chicago$data$x, chicago$data$y), FEMbasis =
 DE_PDE.FEM = FEM(coeff= exp(DE_PDE$g), FEMbasis)
 
 # Training Point Pattern over Chicago Road Network
-PP_train = lpp(X = ppp(x = train_data$x, y = train_data$y, window = chicago$domain$window),
+PP = lpp(X = ppp(x = chicago$data$x, y = chicago$data$y, window = chicago$domain$window),
                L = chicago$domain)
 # KDE-PDE
-bw = bw.lppl(X = chicago$data)
-KDE_PDE = densityHeat(x = chicago$data, sigma = as.numeric(bw)) 
+bw = bw.lppl(X = PP)
+KDE_PDE = densityHeat(x = PP, sigma = as.numeric(bw)) 
 
 KDE_PDE.FEM = FEM(coeff=as.linfun(KDE_PDE)(mesh$nodes[,1], mesh$nodes[,2])/n, FEMbasis)
 
 # KDE-2D
-bw = bw.scott(X = chicago$data)
-KDE_2D = densityQuick.lpp(X = chicago$data, sigma = bw) #, at = points)
+bw = bw.scott(X = PP)
+KDE_2D = densityQuick.lpp(X = PP, sigma = bw) #, at = points)
 
 KDE_2D.FEM = FEM(coeff=as.linfun(KDE_2D)(mesh$nodes[,1], mesh$nodes[,2])/n, FEMbasis)
 
 # KDE-VORONOI #
-bw = bw.voronoi(X = chicago$data) 
-KDE_VORONOI = densityVoronoi(X = chicago$data, sigma = bw)
+bw = bw.voronoi(X = PP) 
+KDE_VORONOI = densityVoronoi(X = PP, sigma = bw)
 
 KDE_VORONOI.FEM = FEM(coeff=as.linfun(KDE_VORONOI)(mesh$nodes[,1], mesh$nodes[,2])/n, FEMbasis)
 
 save(DE_PDE.FEM, KDE_PDE.FEM, KDE_2D.FEM, KDE_VORONOI.FEM, 
-     file = paste("DE_chicago_estimates_",date_,".RData",sep=""))
+     file = paste("data/DE_chicago_estimates_",date_,".RData",sep=""))
 
-# plot
-
-
+source("DE.case.study.post.processing.R")
 
 
