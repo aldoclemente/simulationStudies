@@ -3,29 +3,28 @@
 ##################   Test   #####################
 #################################################
 
+setwd("DensityEstimation/")
+
 graphics.off()
 rm(list=ls())
 
-setwd("DensityEstimation/")
 source("../utils.R")
 source("setting.R")
 
-nsim = 5
-ntest = 1
+nsim = 1
+ntest = 2
 domains = c("simplenet", "ontario")
 
 # methods[1] -> DE-PDE
 # methods[2] -> KDE-PDE
-# methods[3] -> KDE-ES   (slow !)
+# methods[3] -> KDE-ES   (very slow !)
 # methods[4] -> KDE-2D
 # methods[5] -> VORONOI  (slow !)
 
-methods = c(T,T,F,T,F) # mask
+methods = c(T,T,F,T,T) # mask
 methods.names = c("DE-PDE", "KDE-PDE", "KDE-ES", "KDE-2D", "VORONOI")
 tests.names = c("test_1", "test_2")
  
- # "ontario"
-
 sett = setting(domains[ntest]) 
 mesh = sett$mesh
 FEMbasis = sett$FEMbasis
@@ -36,12 +35,10 @@ spat.stat.linnet = sett$spat.stat.linnet
 locs.test = runiflpp(1000, spat.stat.linnet)
 locs.test = cbind(locs.test$data$x, locs.test$data$y)
 # point pattern #
-#n = c(50, 100, 150, 250)
-n = c(50,100,250)
+n = c(50, 100, 150, 250)
 set.seed(1234)
 
 #sources = sample(nnodes, 4)
-
 sources = c(6,8)
 
 auxiliary_test1 = function(x, y, seg, tp, sigma= 0.125, 
@@ -65,6 +62,8 @@ DENSITY = linfun(auxiliary_test1, spat.stat.linnet)
 
 Mass = CPP_get.FEM.Mass.Matrix(FEMbasis)
 true.density = DENSITY(x=mesh$nodes[,1], y=mesh$nodes[,2])
+true.density.FEM = true.density / sum( Mass %*% true.density)
+
 true.density = DENSITY(x=locs.test[,1], y=locs.test[,2]) / sum( Mass %*% true.density)
 
 rmse.DE_PDE = matrix(nrow=nsim, ncol = length(n))
@@ -93,6 +92,7 @@ folder.name = paste("data/", tests.names[ntest],"/",date_,"/",sep="")
 if(!dir.exists(folder.name)) {
   dir.create(folder.name)
 }
+
 
 for(j in 1:length(n)){
   cat(paste("###############  n = ", n[j], "  ###############\n", sep="") ) 
@@ -127,12 +127,11 @@ for( i in 1:nsim){
   if(methods[2]){  
 start = Sys.time()  
 invisible(capture.output(bw <- bw.lppl(X = PP) ))
-invisible(capture.output(KDE_PDE <- densityHeat(x = as.lpp(PP), sigma = as.numeric(bw)) )) 
-
+invisible(capture.output(KDE_PDE <- densityHeat(x = as.lpp(PP), sigma = as.numeric(bw), iterMax = 1e+9) )) 
+cat(paste("- KDE-PDE DONE, time elapsed = ", difftime(Sys.time(),start, units = "mins")," mins \n", sep="") )
 rmse.KDE_PDE[i,j] = sqrt(mean( (true.density - eval.FEM(FEM(coeff=as.linfun(KDE_PDE/n[j])(mesh$nodes[,1], mesh$nodes[,2]),
                                                FEMbasis),
                                                locations = locs.test))^2 ))
-cat(paste("- KDE-PDE DONE, time elapsed = ", difftime(Sys.time(),start, units = "mins")," mins \n", sep="") )
 }
 
   # KDE-ES 
@@ -181,31 +180,17 @@ cat(paste("- KDE-PDE DONE, time elapsed = ", difftime(Sys.time(),start, units = 
     if(methods[4]) KDE_2D.FEM = KDE_2D.FEM + as.linfun(KDE_2D/n[j])(mesh$nodes[,1], mesh$nodes[,2])/ nsim
     if(methods[5]) VORONOI.FEM = KDE_2D.FEM + as.linfun(VORONOI/n[j])(mesh$nodes[,1], mesh$nodes[,2])/ nsim
   
-  save(DE_PDE.FEM, KDE_PDE.FEM, KDE_2D.FEM, VORONOI.FEM, KDE_ES.FEM,
+  save(DE_PDE.FEM, KDE_PDE.FEM, KDE_2D.FEM, VORONOI.FEM, KDE_ES.FEM, true.density.FEM,
        FEMbasis,
        file = paste(folder.name,"estimates",".RData", sep=""))
   
 }
 
   save(rmse.DE_PDE, rmse.KDE_PDE, rmse.KDE_ES,
-     rmse.KDE_2D, rmse.VORONOI, i ,j, methods.names, methods,
+     rmse.KDE_2D, rmse.VORONOI, i ,j, methods.names, methods, n,
      folder.name, date_, file = paste(folder.name,"RMSE",".RData", sep=""))
 
 }
 }
-
-
-if(!dir.exists("data/")) {
-  dir.create("data/")
-}
-
-save(rmse.DE_PDE, rmse.KDE_PDE, rmse.KDE_ES,
-     rmse.KDE_2D, rmse.VORONOI, i ,j, methods.names, methods,
-     folder.name, date_, file = paste(folder.name,"RMSE",".RData", sep=""))
-
-# mean estimate for n = 250
-save(DE_PDE.FEM, KDE_PDE.FEM, KDE_2D.FEM, VORONOI.FEM, KDE_ES.FEM,
-     FEMbasis,
-     file = paste(folder.name,"estimates",".RData", sep=""))
 
 source("DE.test.post.processing.R")

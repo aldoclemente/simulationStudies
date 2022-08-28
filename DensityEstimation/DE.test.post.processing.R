@@ -54,7 +54,8 @@ boxplot_RMSE <- function(RMSE,
          title=title)+
     scale_fill_viridis(begin = end,
                        end = begin,
-                       option = "viridis", discrete=T) + #ok
+                       option = "viridis", discrete=T,
+                       breaks = methods.names[methods]) + #ok
     scale_color_manual(values=border_col) +
     #scale_y_continuous(labels = function(x) format(x, scientific = TRUE))+
     MyTheme + 
@@ -64,9 +65,44 @@ boxplot_RMSE <- function(RMSE,
   return(p)  
 }
 
+plot_density<-function(true.density,
+                       max.col,
+                       min.col,
+                       main =  "Density", 
+                       palette = NULL, #palette = NULL (ggplot default colors), "viridis", "magma"
+                       line.size=1){
+  
+  if(!is.null(palette)){
+    if(palette=="viridis")
+      p=viridis
+    else if(palette=="magma")
+      p=magma
+  }else{
+    p=jet.col
+  }
+  
+  max.col = max(max.col, true.density$coeff)
+  min.col = min(min.col, true.density$coeff)
+  
+  density.plot <- R_plot_graph.ggplot2.2( true.density, # FEM object
+                                          line.size = line.size,
+                                          color.min = min.col,
+                                          color.max = max.col,
+                                          title = main,
+                                          return.ggplot.object = T,
+                                          palette=p,
+                                          legend.pos = "right")
+  
+  ret = list(max.col = max.col, min.col = min.col, density.plot = density.plot)  
+  return(ret)
+}
+
+
 plot_estimates <-function(estimates, # list of estimates
+                          true.density,
                           methods,
                           methods.names =  c(rep("",times=length(estimates))), 
+                          true.density.main = "Density",
                           palette = NULL, #palette = NULL (ggplot default colors), "viridis", "magma"
                           line.size=1)
 {
@@ -88,6 +124,12 @@ plot_estimates <-function(estimates, # list of estimates
     min.col = min(min.col, estimates[[i]]$coeff)
   }
   
+  ret.list = plot_density(true.density, max.col, min.col, main =  true.density.main, 
+                         palette = palette, 
+                         line.size=line.size)
+  
+  max.col = ret.list$max.col
+  min.col = ret.list$min.col
   estimates.plot = list()
   
   for(i in 1:length(estimates)){
@@ -103,11 +145,10 @@ plot_estimates <-function(estimates, # list of estimates
     }
   }
   
-  return(estimates.plot)
+  ret = list(estimates.plot = estimates.plot, density.plot = ret.list$density.plot) 
+  return(ret)
   
 }
-
-
 
 #load("data/test/DE_test1_RMSE_2022-08-25-15_45_45.RData")
 
@@ -115,7 +156,7 @@ folder.imgs = paste(folder.name,"img/",sep="")
 if(!dir.exists(folder.imgs)) {
   dir.create(folder.imgs)
 }
-
+nsim = nrow(rmse.DE_PDE)
 RMSE = matrix(nrow = nsim * length(n), ncol=length(methods.names)) 
 RMSE[,1] = as.vector(rmse.DE_PDE)
 RMSE[,2] = as.vector(rmse.KDE_PDE)
@@ -124,13 +165,13 @@ RMSE[,4] = as.vector(rmse.KDE_2D)
 RMSE[,5] = as.vector(rmse.VORONOI)
 
 
-pdf(paste(folder.imgs,"RMSE",".pdf",sep=""))
+pdf(paste(folder.imgs,"RMSE",".pdf",sep=""), width=12)
 
 boxplot_RMSE(RMSE, 
              methods = methods,
              methods.names = methods.names, 
              nsim = nsim,
-             title.size=20,
+             title.size=26,
              begin=0.95, #color
              end=0.25,   #color
              width =0.75,
@@ -147,32 +188,40 @@ estimates[[4]] = FEM(KDE_2D.FEM, FEMbasis)
 estimates[[5]] = FEM(VORONOI.FEM, FEMbasis)
 
 PLOTS <- plot_estimates(estimates,
+                        true.density = FEM(true.density.FEM,FEMbasis),
                         methods = methods,
                         methods.names = methods.names,
+                        true.density.main = "Density",
                         palette="viridis",
                         line.size = 0.75)
 
+PLOTS$density.plot
 for(i in 1:length(estimates)){
-  print(PLOTS[[i]])
+  if(methods[i]) print(PLOTS$estimates.plot[[i]])
 }
 
 PLOTS <- plot_estimates(estimates, 
+                        true.density = FEM(true.density.FEM,FEMbasis),
                         methods = methods,
-                        methods.names = c("DE-PDE", "KDE-PDE", "KDE-2D", "VORONOI"),
+                        methods.names = methods.names,
+                        true.density.main = "Density",
                         palette="magma",
                         line.size = 0.75)
-
+PLOTS$density.plot
 for(i in 1:length(estimates)){
-  print(PLOTS[[i]])
+  if(methods[i])  print(PLOTS$estimates.plot[[i]])
 }
 
 PLOTS <- plot_estimates(estimates,
+                        true.density = FEM(true.density.FEM,FEMbasis),
                         methods = methods,
-                        methods.names = c("DE-PDE", "KDE-PDE", "KDE-2D", "VORONOI"),
+                        methods.names = methods.names,
+                        true.density.main = "Density",
                         line.size = 0.75)
 
+PLOTS$density.plot
 for(i in 1:length(estimates)){
-  print(PLOTS[[i]])
+  if(methods[i])  print(PLOTS$estimates.plot[[i]])
 }
 
 dev.off()
