@@ -167,7 +167,7 @@ RMSE[,5] = as.vector(rmse.VORONOI)
 
 pdf(paste(folder.imgs,"RMSE",".pdf",sep=""), width=12)
 
-boxplot_RMSE(RMSE, 
+print(boxplot_RMSE(RMSE, 
              methods = methods,
              methods.names = methods.names, 
              nsim = nsim,
@@ -176,7 +176,7 @@ boxplot_RMSE(RMSE,
              end=0.25,   #color
              width =0.75,
              n = n,
-             title="RMSE")
+             title="RMSE"))
 dev.off()
 
 pdf(paste(folder.imgs,"estimates",".pdf",sep=""))
@@ -195,7 +195,7 @@ PLOTS <- plot_estimates(estimates,
                         palette="viridis",
                         line.size = 0.75)
 
-PLOTS$density.plot
+print(PLOTS$density.plot)
 for(i in 1:length(estimates)){
   if(methods[i]) print(PLOTS$estimates.plot[[i]])
 }
@@ -207,7 +207,7 @@ PLOTS <- plot_estimates(estimates,
                         true.density.main = "Density",
                         palette="magma",
                         line.size = 0.75)
-PLOTS$density.plot
+print(PLOTS$density.plot)
 for(i in 1:length(estimates)){
   if(methods[i])  print(PLOTS$estimates.plot[[i]])
 }
@@ -219,7 +219,7 @@ PLOTS <- plot_estimates(estimates,
                         true.density.main = "Density",
                         line.size = 0.75)
 
-PLOTS$density.plot
+print(PLOTS$density.plot)
 for(i in 1:length(estimates)){
   if(methods[i])  print(PLOTS$estimates.plot[[i]])
 }

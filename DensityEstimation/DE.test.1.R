@@ -11,8 +11,8 @@ rm(list=ls())
 source("../utils.R")
 source("setting.R")
 
-nsim = 1
-ntest = 2
+nsim = 5
+ntest = 1
 domains = c("simplenet", "ontario")
 
 # methods[1] -> DE-PDE
@@ -21,7 +21,7 @@ domains = c("simplenet", "ontario")
 # methods[4] -> KDE-2D
 # methods[5] -> VORONOI  (slow !)
 
-methods = c(T,T,F,T,T) # mask
+methods = c(T,T,F,T,F) # mask
 methods.names = c("DE-PDE", "KDE-PDE", "KDE-ES", "KDE-2D", "VORONOI")
 tests.names = c("test_1", "test_2")
  
@@ -140,8 +140,6 @@ rmse.KDE_PDE[i,j] = sqrt(mean( (true.density - eval.FEM(FEM(coeff=as.linfun(KDE_
   invisible(capture.output(bw <- bw.lppl(X = PP) ))
   invisible(capture.output(KDE_ES <- densityEqualSplit(x = PP, sigma = bw) ))
   cat(paste("- KDE-ES DONE, time elapsed = ", difftime(Sys.time(),start, units = "mins")," mins \n", sep="") )
-
-#rmse[,3] = sqrt(mean( (true.density - as.linfun(KDE_ES)(mesh$nodes[,1], mesh$nodes[,2])/n)^2 ))
 
   rmse.KDE_ES[i,j] = sqrt(mean( (true.density - eval.FEM(FEM(coeff=as.linfun(KDE_ES/n[j])(mesh$nodes[,1], mesh$nodes[,2]),
                                         FEMbasis),
