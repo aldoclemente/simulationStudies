@@ -43,21 +43,30 @@ boxplot_RMSE <- function(RMSE,
                                      size=c(1,0.5))
   )
   
-  border_col = darken(viridis(sum(methods), begin=end,end=begin), amount=0.25)
+  border_col = darken(viridis(length(methods), begin=end,end=begin), amount=0.25)
+  fill_col = viridis(length(methods), begin=end, end=begin)
+  
+  BORDER = c()
+  FILL = c()
+  for(i in 1:length(methods)){
+    if(methods[i]){ 
+      FILL = append(FILL, fill_col[i])
+      BORDER = append(BORDER, border_col[i])
+      }
+  }
+  
+  dataFrame$METHODS = factor(dataFrame$METHODS, 
+                              levels=methods.names) 
   
   p<-ggplot(dataFrame)+
     geom_boxplot(aes(x=N,
                      y=RMSE, group=interaction(METHODS,N),
-                     fill=METHODS))+
+                     fill=METHODS, color = METHODS))+
     scale_x_discrete(limits=as.character(n))+
     labs(x="", y="",
          title=title)+
-    scale_fill_viridis(begin = end,
-                       end = begin,
-                       option = "viridis", discrete=T,
-                       breaks = methods.names[methods]) + #ok
-    scale_color_manual(values=border_col) +
-    #scale_y_continuous(labels = function(x) format(x, scientific = TRUE))+
+    scale_fill_manual(values = FILL) +
+    scale_color_manual(values= BORDER) + 
     MyTheme + 
     theme(#plot.title=element_blank(),
       axis.ticks.x = element_blank(),
@@ -172,7 +181,7 @@ print(boxplot_RMSE(RMSE,
              methods.names = methods.names, 
              nsim = nsim,
              title.size=26,
-             begin=0.95, #color
+             begin=1, #color
              end=0.25,   #color
              width =0.75,
              n = n,
@@ -225,3 +234,13 @@ for(i in 1:length(estimates)){
 }
 
 dev.off()
+
+pdf(paste(folder.imgs,"point_pattern",".pdf",sep=""))
+for(i in n){
+PP = rlpp(i, DENSITY)
+plot(mesh, pch=".")
+points(PP$data$x, PP$data$y, pch=16, col ="red3")
+}
+dev.off()
+
+

@@ -11,8 +11,8 @@ rm(list=ls())
 source("../utils.R")
 source("setting.R")
 
-nsim = 5
-ntest = 1
+nsim = 30
+ntest = 2
 domains = c("simplenet", "ontario")
 
 # methods[1] -> DE-PDE
@@ -21,7 +21,7 @@ domains = c("simplenet", "ontario")
 # methods[4] -> KDE-2D
 # methods[5] -> VORONOI  (slow !)
 
-methods = c(T,T,F,T,F) # mask
+methods = c(T,F,F,T,F) # mask
 methods.names = c("DE-PDE", "KDE-PDE", "KDE-ES", "KDE-2D", "VORONOI")
 tests.names = c("test_1", "test_2")
  
@@ -38,27 +38,12 @@ locs.test = cbind(locs.test$data$x, locs.test$data$y)
 n = c(50, 100, 150, 250)
 set.seed(1234)
 
-#sources = sample(nnodes, 4)
-sources = c(6,8)
+#sources = c(6,8) # test 1
+sources = c(63,150, 250) # test 2
 
-auxiliary_test1 = function(x, y, seg, tp, sigma= 0.125, 
-                           nodes.lpp = ppp(x = mesh$nodes[,1], y = mesh$nodes[,2], 
-                                           window = owin(xrange = c(min(mesh$nodes[,1]),max(mesh$nodes[,1])),
-                                                         yrange = c(min(mesh$nodes[,2]),max(mesh$nodes[,2])))),
-                           L = spat.stat.linnet,
-                           source = sources)
-{ 
-  PP = ppp(x = x, y = y, window = nodes.lpp$window)
-  ND = crossdist.lpp(lpp(nodes.lpp, L), lpp(PP, L))
-  
-  return(   0.25 * 1/sqrt(2*pi*sigma^2) * exp(-ND[source[1],]^2/(2*sigma^2)) + 
-            0.25 * 1/sqrt(2*pi*sigma^2) * exp(-ND[source[2],]^2/(2*sigma^2)))
-  
-  
-}
+auxiliary_test = aux_test[[ntest]]
 
-
-DENSITY = linfun(auxiliary_test1, spat.stat.linnet)
+DENSITY = linfun(auxiliary_test, spat.stat.linnet) # test 2
 
 Mass = CPP_get.FEM.Mass.Matrix(FEMbasis)
 true.density = DENSITY(x=mesh$nodes[,1], y=mesh$nodes[,2])
