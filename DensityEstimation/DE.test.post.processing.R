@@ -86,6 +86,8 @@ plot_density<-function(true.density,
       p=viridis
     else if(palette=="magma")
       p=magma
+    else if(palette=="inferno")
+      p=inferno
   }else{
     p=jet.col
   }
@@ -121,6 +123,8 @@ plot_estimates <-function(estimates, # list of estimates
       p=viridis
     else if(palette=="magma")
       p=magma
+    else if(palette="inferno")
+      p=inferno
   }else{
     p=jet.col
   }
@@ -242,5 +246,26 @@ plot(mesh, pch=".")
 points(PP$data$x, PP$data$y, pch=16, col ="red3")
 }
 dev.off()
+
+estimates = list()
+estimates[[1]] = FEM(DE_PDE.FEM, FEMbasis)
+estimates[[2]] = FEM(KDE_PDE.FEM, FEMbasis)
+estimates[[3]] = FEM(KDE_ES.FEM, FEMbasis)
+estimates[[4]] = FEM(KDE_2D.FEM, FEMbasis)
+estimates[[5]] = FEM(VORONOI.FEM, FEMbasis)
+
+PLOTS <- plot_estimates(estimates,
+                        true.density = FEM(true.density.FEM,FEMbasis),
+                        methods = methods,
+                        methods.names = methods.names,
+                        true.density.main = "Density",
+                        palette="inferno",
+                        line.size = 0.75)
+
+print(PLOTS$density.plot)
+for(i in 1:length(estimates)){
+  if(methods[i]) print(PLOTS$estimates.plot[[i]])
+}
+
 
 

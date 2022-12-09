@@ -55,6 +55,7 @@ invisible(capture.output(
 results$tot.time
 RMSE = results$RMSE
 mean.field.fdaPDE = results$mean.field.fdaPDE
+estimates = results$estimates
 boxplot_RMSE(RMSE, n_data, 
              model_ = c(T,T,T,T),
              names_ = c("fdaPDE","GWR","lattice","Krig"))
@@ -73,7 +74,7 @@ if(domain=="estevan"){
 filename_ = paste(paste(paste("data/",head,sep=""),tail_, sep="-"), ".RData", sep="")
 imgfile_  = paste(paste(paste(paste("img/" ,head,sep=""),"plots",sep="-"),tail_,sep="-"),".pdf",sep="")
 
-save(RMSE, field, observations_, n_data, mean.field.fdaPDE, imgfile_, FEMbasis,
+save(RMSE, field, observations_, n_data, mean.field.fdaPDE, imgfile_, FEMbasis, estimates,
      file = filename_)
 
 #################################
@@ -99,10 +100,10 @@ RegressionNoCovPlots(imgfile = imgfile_,
 
 colors = viridis(n=4, begin=0.95, end=0.25)
 
-pdf("img/RMSE-NoCov.pdf")
+pdf("img/RMSE-NoCov-18.pdf", width=18)
 boxplot_RMSE(RMSE, n_data, model_ = c(T,T,T,T), 
              names_ = c("SR-PDE","GWR","Lattice","RR-Krig"),
-             legend.pos = c(0.825,0.8625), palette=palette,
+             legend.pos = c(0.95,0.8625), palette=palette,
              colors=colors)
 dev.off()
 

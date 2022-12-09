@@ -27,7 +27,7 @@ load("LHP_preliminaries_1.RData")
 load("LHP_preliminaries_2.RData")
 load("LHP_preliminaries_3.RData")
 
-mesh = create.mesh.1.5D(nodes = as.matrix(data.frame.igr$vertices)/10^6,
+mesh = create.mesh.1.5D(nodes = as.matrix(data.frame.igr$vertices)/10^3,
                         edges = as.matrix(data.frame.igr$edges[,1:2]))
 FEMbasis = create.FEM.basis(mesh=mesh)
 
@@ -81,11 +81,11 @@ for(i in 1:K){
 
     #  fdaPDE  #
   
-  observations = train_data$PURCHASE[1:10]
-  locs = cbind(train_data$X[1:10], train_data$Y[1:10])/10^6 #/10^3
+  observations = train_data$PURCHASE
+  locs = cbind(train_data$X, train_data$Y)/10^3 #/10^3
   
-  W = cbind( train_data$FLOORSZ[1:10], train_data$PROF[1:10], train_data$BATH2[1:10]) #, 
-  lambda = 10^seq(from=0,to=2,by=0.0725) #28
+  W = cbind( train_data$FLOORSZ, train_data$PROF, train_data$BATH2) #, 
+  lambda = 10^seq(from=1,to=2.5,by=0.0725) #28
   output_CPP = smooth.FEM(observations = observations, 
                           locations = locs,
                           FEMbasis = FEMbasis,
@@ -101,19 +101,19 @@ for(i in 1:K){
   beta2 = output_CPP$solution$beta[2]
   beta3 = output_CPP$solution$beta[3]
   
-  locs_pred = cbind(test_data$X, test_data$Y)/10^6
+  locs_pred = cbind(test_data$X, test_data$Y)/10^3
   #locs_pred = projection.points.1.5D(mesh, cbind(test_data$X, test_data$Y)) #/10^3 )
   prediction = beta1*test_data$FLOORSZ + 
                beta2*test_data$PROF + 
                beta3*test_data$BATH2 +
                eval.FEM(output_CPP$fit.FEM, locs_pred)
   RMSE.prediction$RMSE.fdaPDE[i] = sqrt(mean( (prediction - LN.test_data$PURCHASE)^2 ) )
-  save(samples, RMSE.prediction, file="fdaPDE_vs_GWR.RData")
   }
 end = difftime(Sys.time, start, units="hours")
+tot.time=end
 
-filename = paste("fdaPDE_vs_GWR-", gsub(":","_",gsub(" ","-",Sys.time())), ".RData",sep="")
-save(samples, RMSE.prediction, file=filename)
+filename = paste("fdaPDE_vs_GWR-LocsProj", gsub(":","_",gsub(" ","-",Sys.time())), ".RData",sep="")
+save(tot.time, RMSE.prediction, file=filename)
 
 ###
 

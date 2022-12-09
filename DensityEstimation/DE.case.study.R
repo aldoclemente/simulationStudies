@@ -22,6 +22,22 @@ K = 10
 dataList = set_Kfold_data(chicago$data, seed = 0)
 n = nrow(chicago$data)
 
+date_ = gsub(":","_",gsub(" ","-",Sys.time()))
+if(!dir.exists("data/")) {
+  dir.create("data/")
+}
+
+if( !dir.exists(paste("data/chicago/",sep=""))){
+  dir.create(paste("data/chicago/",sep=""))
+}
+
+folder.name = paste("data/chicago/", date_,"/",sep="")
+
+if(!dir.exists(folder.name)) {
+  dir.create(folder.name)
+}
+
+
 CV_errors = matrix(0, nrow = K, ncol = 4)
 
 for(i in 1:K){
@@ -68,11 +84,8 @@ for(i in 1:K){
 
 date_ = gsub(":","_",gsub(" ","-",Sys.time()))
 
-if(!dir.exists("data/")) {
-  dir.create("data/")
-}
-
-save(CV_errors, date_, file = paste("data/DE_chicago_CV_errors_",date_,".RData", sep=""))
+save(CV_errors, date_, folder.name,
+     file = paste(folder.name, "CV_error.RData", sep=""))
 
 # Competing methods
 # DE-PDE
@@ -106,7 +119,7 @@ KDE_VORONOI = densityVoronoi(X = PP, sigma = bw)
 KDE_VORONOI.FEM = FEM(coeff=as.linfun(KDE_VORONOI)(mesh$nodes[,1], mesh$nodes[,2])/n, FEMbasis)
 
 save(DE_PDE.FEM, KDE_PDE.FEM, KDE_2D.FEM, KDE_VORONOI.FEM, 
-     file = paste("data/DE_chicago_estimates_",date_,".RData",sep=""))
+     file = paste(folder.name,"estimates.RData",sep=""))
 
 source("DE.case.study.post.processing.R")
 

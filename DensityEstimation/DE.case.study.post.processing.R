@@ -12,6 +12,8 @@ library(gridExtra)
 source("../Auxiliary/R_plot_graph.ggplot2.R")
 
 boxplot_CV_error <-function(CV_errors,
+                            methods,
+                            methods.names,
                         title.size=20,
                         begin=0.95, #color
                         end=0.25,   #color
@@ -19,9 +21,9 @@ boxplot_CV_error <-function(CV_errors,
                         title="CV error")
 {
   
-  model = rep(c("DE-PDE", "KDE-PDE", "KDE-2D", "VORONOI"), each=nrow(CV_errors))
+  METHODS = rep(methods.names[methods], each=nrow(CV_errors))
   RMSE =  as.vector(CV_errors)
-  dataFrame = data.frame(RMSE=RMSE, model = model)
+  dataFrame = data.frame(RMSE=RMSE, METHODS = METHODS)
   
   MyTheme <- theme(
     axis.text = element_text(size=title.size-5),
@@ -37,13 +39,27 @@ boxplot_CV_error <-function(CV_errors,
   )
   
   border_col = darken(viridis(ncol(CV_errors), begin=end,end=begin), amount=0.25)
+  fill_col = viridis(ncol(CV_errors), begin=end, end=begin)
+  
+  BORDER = c()
+  FILL = c()
+  for(i in 1:length(methods)){
+    if(methods[i]){ 
+      FILL = append(FILL, fill_col[i])
+      BORDER = append(BORDER, border_col[i])
+    }
+  }
+  
+  dataFrame$METHODS = factor(dataFrame$METHODS, 
+                             levels=methods.names) 
+  
   
   p<-ggplot(dataFrame)+
-    geom_boxplot(aes(x=model,
-                     y=RMSE, group=model,
-                     fill=model,
-                     color=model), width=width)+
-    scale_x_discrete(limits=c("DE-PDE", "KDE-PDE", "KDE-2D", "VORONOI"))+
+    geom_boxplot(aes(x=METHODS,
+                     y=RMSE, group=METHODS,
+                     fill=METHODS,
+                     color=METHODS), width=width)+
+    scale_x_discrete(limits=methods.names[methods])+
     labs(x="", y="",
          title=title)+
     scale_fill_viridis(begin = end,
@@ -58,28 +74,22 @@ boxplot_CV_error <-function(CV_errors,
   return(p)  
 }
 
+# estimates, lista di oggetti FEM ( fem = FEM(coeff, FEMbasis))
+# palette, color palette (es. jet.col, viridis, magma, inferno, plasma)
+# line.size, dimensione segmenti network
+# titles, vettore di titoli dei plot 
 plot_estimates <-function(estimates, # list of estimates
-                          palette = NULL, #palette = NULL (ggplot default colors), "viridis", "magma"
+                          palette = jet.col, #palette = NULL (ggplot default colors), "viridis", "magma"
                           line.size=1,
-                          names = c(rep("",times=length(estimates))) )
+                          titles = c(rep("",times=length(estimates))) )
   {
   
-  if(!is.null(palette)){
-    if(palette=="viridis")
-      p=viridis
-    else if(palette=="magma")
-      p=magma
-  }else{
-    p=jet.col
+  max.col = -1e8
+  min.col = 1e8
+  for(i in 1:length(estimates)){
+    max.col = max(estimates[[i]]$coeff, max.col)
+    min.col = min(estimates[[i]]$coeff, min.col)
   }
-  
-  max.col = max(estimates[[2]]$coeff, estimates[[1]]$coeff)
-  min.col = min(estimates[[2]]$coeff, estimates[[1]]$coeff)
-  
-  max.col = max(max.col, estimates[[3]]$coeff)
-  min.col = min(min.col, estimates[[3]]$coeff)
-  #max.col = max(max.col, estimates[[4]]$coeff)
-  #min.col = min(min.col, estimates[[4]]$coeff)
   
   estimates.plot = list()
   
@@ -89,36 +99,30 @@ plot_estimates <-function(estimates, # list of estimates
                                                  line.size = line.size,
                                                  color.min = min.col,
                                                  color.max = max.col,
-                                                 title = names[[i]],
-                                                 return.ggplot.object = T,
-                                                 palette=p,
+                                                 title = titles[[i]],
+                                                 palette=palette,
                                                  legend.pos = "right")
     
   }
   
-  # estimates.plot[[4]] = R_plot_graph.ggplot2.2( estimates[[4]], # FEM object
-  #                                               line.size = line.size,
-  #                                               #color.min = min.col,
-  #                                               #color.max = max.col,
-  #                                               title = names[[4]],
-  #                                               return.ggplot.object = T,
-  #                                               palette=viridis,
-  #                                               legend.pos = "right")
-   
   return(estimates.plot)
   
 }
 
-if(!dir.exists("img/")) {
-  dir.create("img/")
+folder.imgs = paste(folder.name,"img/",sep="")
+if(!dir.exists(folder.imgs)) {
+  dir.create(folder.imgs)
 }
 
-pdf(paste("img/DE_chicago_img_",date_,".pdf",sep=""))
-boxplot(CV_errors, names = c("DE-PDE", "KDE-PDE", "KDE-2D", "VORONOI"),
-        col = c("blue4", "green4", "green", "yellow"),
-        main = "CV error")
-boxplot_CV_error(CV_errors = CV_errors)
+pdf(paste(folder.imgs,"CV_error.pdf",sep=""))
+methods = c(T,T,F,T,T)
+methods.names = c("DE-PDE", "KDE-PDE", "KDE-ES", "KDE-2D", "VORONOI")
+boxplot_CV_error(CV_errors = CV_errors, 
+                 methods = methods,
+                 methods.names = methods.names)
+dev.off()
 
+pdf(paste(folder.imgs, "estimates.pdf",sep=""))
 estimates = list()
 estimates[[1]] = DE_PDE.FEM
 estimates[[2]] = KDE_PDE.FEM
@@ -126,8 +130,8 @@ estimates[[3]] = KDE_2D.FEM
 estimates[[4]] = KDE_VORONOI.FEM
 
 PLOTS <- plot_estimates(estimates, 
-                        palette="viridis",
-                        names = c("DE-PDE", "KDE-PDE", "KDE-2D", "VORONOI"),
+                        palette=viridis,
+                        titles = methods.names[methods],
                         line.size = 0.75)
 
 for(i in 1:length(estimates)){
@@ -135,8 +139,8 @@ for(i in 1:length(estimates)){
 }
 
 PLOTS <- plot_estimates(estimates, 
-                        palette="magma",
-                        names = c("DE-PDE", "KDE-PDE", "KDE-2D", "VORONOI"),
+                        palette=magma,
+                        titles = methods.names[methods],
                         line.size = 0.75)
 
 for(i in 1:length(estimates)){
@@ -144,11 +148,90 @@ for(i in 1:length(estimates)){
 }
 
 PLOTS <- plot_estimates(estimates, 
-                        names = c("DE-PDE", "KDE-PDE", "KDE-2D", "VORONOI"),
+                        titles = methods.names[methods],
                         line.size = 0.75)
 
 for(i in 1:length(estimates)){
   print(PLOTS[[i]])
 }
-
 dev.off()
+
+# ref mesh 
+estimates = list()
+estimates[[1]] = DE_PDE.FEM
+estimates[[2]] = KDE_PDE.FEM
+estimates[[3]] = KDE_2D.FEM
+estimates[[4]] = KDE_VORONOI.FEM
+
+mesh.ref = refine.mesh.1.5D(DE_PDE.FEM$FEMbasis$mesh, delta = 10)
+FEMbasis.ref = create.FEM.basis(mesh.ref)
+locs = mesh.ref$nodes
+
+for(i in 1:length(estimates))
+  estimates[[i]] = FEM(eval.FEM(estimates[[i]], locations = locs),
+                       FEMbasis.ref)
+
+
+#pdf(paste(folder.imgs,"estimates_ref.pdf",sep=""))
+pdf("estimates_ref.pdf")
+PLOTS <- plot_estimates(estimates, 
+                        palette = viridis,
+                        titles = methods.names[methods],
+                        line.size = 0.75)
+
+for(i in 1:length(estimates)){
+  print(PLOTS[[i]])
+}
+
+PLOTS <- plot_estimates(estimates, 
+                        palette = inferno,
+                        titles = methods.names[methods],
+                        line.size = 0.75)
+
+for(i in 1:length(estimates)){
+  print(PLOTS[[i]])
+}
+
+PLOTS <- plot_estimates(estimates, 
+                        palette=magma,
+                        titles = methods.names[methods],
+                        line.size = 0.75)
+
+for(i in 1:length(estimates)){
+  print(PLOTS[[i]])
+}
+
+PLOTS <- plot_estimates(estimates, 
+                        palette=plasma,
+                        titles = methods.names[methods],
+                        line.size = 0.75)
+
+for(i in 1:length(estimates)){
+  print(PLOTS[[i]])
+}
+dev.off()
+
+pdf(paste(folder.imgs, "point_pattern.pdf",sep=""))
+plot(mesh, pch=".")
+points(chicago$data$x, chicago$data$y, pch=16, col="red3")
+dev.off()
+
+pdf("estimates_plasma.pdf")
+estimates = list()
+estimates[[1]] = DE_PDE.FEM
+estimates[[2]] = KDE_PDE.FEM
+estimates[[3]] = KDE_2D.FEM
+estimates[[4]] = KDE_VORONOI.FEM
+
+PLOTS <- plot_estimates(estimates, 
+                        palette=plasma,
+                        titles = methods.names[methods],
+                        line.size = 0.75)
+
+for(i in 1:length(estimates)){
+  print(PLOTS[[i]])
+}
+dev.off()
+
+
+

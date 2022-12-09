@@ -36,6 +36,8 @@ nnodes = nrow(ND_)
 
 mean.field.fdaPDE = matrix(0,nrow=nnodes, ncol=length(n_data))
 
+estimates = list()
+
 # lattice method
 tmp = as.lattice.fdaPDE(mesh)
 nodes.lattice = tmp$nodes.lattice
@@ -52,6 +54,12 @@ for(j in 1:length(n_data)){
     locations = mesh$nodes[sample_,]
     observations = observations_[sample_]
     
+    if(i==1 && j == 1){ 
+      estimates$locations = locations
+      estimates$observations = observations
+      estimates$true.signal = true.signal[sample_]
+    }
+  
     ND = ND_[sample_, sample_]
     ED = ED_[sample_, sample_]
     
@@ -70,6 +78,10 @@ for(j in 1:length(n_data)){
     RMSE.fdaPDE[i,j] = rmse(true.signal[sample_], prediction)
     
     mean.field.fdaPDE[,j] = mean.field.fdaPDE[,j] + output_CPP$fit.FEM$coeff / n_sim 
+    
+    if(i==1 && j == 1){ 
+      estimates$fdaPDE = prediction 
+      }
     }
     ### GWR ### 
     
@@ -90,7 +102,13 @@ for(j in 1:length(n_data)){
                        bw = bw.ND,
                        dMat = ND)
     RMSE.GWR.ND[i,j] = rmse(GWR.ND$SDF$yhat,true.signal[sample_])
+    
+    if(i==1 && j == 1){ 
+      estimates$GWR = prediction 
     }
+    
+    }
+    
     # lattice based method
     if(model_[3]){
       # dummy z-coordinates !
@@ -108,6 +126,11 @@ for(j in 1:length(n_data)){
                                     k = output_press$k)
     prediction.latt = eval.FEM(FEM(output_lattice[,4], FEMbasis), locations=locations)  
     RMSE.lattice[i,j] = rmse(true.signal[sample_], prediction.latt)
+    
+    if(i==1 && j == 1){ 
+      estimates$lattice = prediction.latt 
+    }
+  
     }
     ### Rank Reduced Kriging (Ver Hoef) ###
     if(model_[4]){
@@ -125,6 +148,12 @@ for(j in 1:length(n_data)){
                                    model=c(F,T,F,F))[[2]]
     
     RMSE.rr.krig[i,j] = rmse(RR.krig$cv.pred, true.signal[sample_])
+    
+    if(i==1 && j == 1){ 
+      estimates$rr.krig = RR.krig$cv.pred 
+    }
+    
+    
     }
     
   }
@@ -136,7 +165,10 @@ for(j in 1:length(n_data)){
                RMSE.lattice  = RMSE.lattice,
                RMSE.rr.krig = RMSE.rr.krig)
   
-  res_ = list(RMSE = RMSE, tot.time=tot.time, mean.field.fdaPDE = mean.field.fdaPDE)
+  res_ = list(RMSE = RMSE, 
+              tot.time=tot.time, 
+              mean.field.fdaPDE = mean.field.fdaPDE,
+              estimates = estimates)
   return(res_)
 }
 
@@ -149,6 +181,7 @@ boxplot_RMSE <- function(RMSE, n_data,
                          begin = 0.35, # begin palette
                          end = 0.85, 
                          colors = NULL,
+                         width=0.5,
                          ylim =NULL){ # palette
  
   M = nrow(RMSE[[1]]) #n_sim
@@ -201,7 +234,7 @@ boxplot_RMSE <- function(RMSE, n_data,
   ggplot(data_) + 
     geom_boxplot(aes(x=obs_, y=RMSE_, 
                      #group=interaction(obs_,model_), 
-                     fill=model_))+
+                     fill=model_), width=width)+
     scale_x_discrete(limits=as.character(n_data))+
     labs(x="observations", y="",
          title="RMSE",)+
@@ -222,7 +255,7 @@ boxplot_RMSE <- function(RMSE, n_data,
       geom_boxplot(aes(x=obs_, y=RMSE_, 
                        #group=interaction(obs_,model_), 
                        fill=model_,
-                       color=model_))+
+                       color=model_), width=width)+
       scale_x_discrete(limits=as.character(n_data))+
       labs(x="observations", y="",
            title="RMSE",)+
@@ -247,7 +280,7 @@ boxplot_RMSE <- function(RMSE, n_data,
       geom_boxplot(aes(x=obs_, y=RMSE_, 
                        #group=interaction(obs_,model_), 
                        fill=model_,
-                       color=model_))+
+                       color=model_), width=width)+
       scale_x_discrete(limits=as.character(n_data))+
       labs(x="observations", y="",
            title="RMSE",)+
@@ -266,6 +299,3 @@ boxplot_RMSE <- function(RMSE, n_data,
   
 }
 
-
-#
-# res  + scale_fill_grey(start = begin, end = end) + scale_color_grey(start=begin, end=end)

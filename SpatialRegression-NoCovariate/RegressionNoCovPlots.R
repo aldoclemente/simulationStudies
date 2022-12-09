@@ -146,3 +146,93 @@ RegressionNoCovPlots<-function(imgfile,
   print(observations.example.4)
   dev.off()
 }
+
+plotting.estimates <- function(imgfile_,
+                               estimates,
+                               FEMbasis,
+                               line.size=0.5){
+  p = viridis
+  points_ = estimates$locations
+  observations = estimates$observations # 
+  true.signal = estimates$true.signal
+  
+  max.col = max(true.signal, estimates$fdaPDE)
+  min.col = min(true.signal, estimates$fdaPDE)
+  
+  max.col = max(max.col, estimates$GWR)
+  min.col = min(min.col, estimates$GWR)
+  max.col = max(max.col, estimates$lattice)
+  min.col = min(min.col, estimates$lattice)
+  max.col = max(max.col, estimates$rr.krig)
+  min.col = min(min.col, estimates$rr.krig)
+  
+  mu_ = true.signal
+  estimates.true <- R_plot_mesh.ggplot(mesh = FEMbasis$mesh,
+                                         points_ = points_,
+                                         mu = mu_, 
+                                         color.min = min.col,
+                                         color.max = max.col,
+                                         line.size=line.size,
+                                         palette=p,
+                                         title = "TRUE")
+  mu_ = observations
+  estimates.obs <- R_plot_mesh.ggplot(mesh = FEMbasis$mesh,
+                                      points_ = points_,
+                                      mu = mu_, 
+                                      color.min = min.col,
+                                      color.max = max.col,
+                                      line.size=line.size,
+                                      palette=p,
+                                      title = bquote(y[i] == f(bold(p)[i]) + epsilon[i] )) #bold(w)[i]^T * bold(beta)
+  
+  # paste("Sample ",
+  mu_ = estimates$fdaPDE
+  estimates.fdaPDE <- R_plot_mesh.ggplot(mesh = FEMbasis$mesh,
+                                               points_ = points_,
+                                               mu = mu_, 
+                                               color.min = min.col,
+                                               color.max = max.col,
+                                               line.size=line.size,
+                                               palette=p,
+                                               title = "SR-PDE")
+  
+  mu_ = estimates$GWR
+  estimates.GWR <- R_plot_mesh.ggplot(mesh = FEMbasis$mesh,
+                                         points_ = points_,
+                                         mu = mu_, 
+                                         color.min = min.col,
+                                         color.max = max.col,
+                                         line.size=line.size,
+                                         palette=p,
+                                         title = "GWR")
+  
+  mu_ = estimates$lattice
+  estimates.lattice <- R_plot_mesh.ggplot(mesh = FEMbasis$mesh,
+                                      points_ = points_,
+                                      mu = mu_, 
+                                      color.min = min.col,
+                                      color.max = max.col,
+                                      line.size=line.size,
+                                      palette=p,
+                                      title = "Lattice")
+  
+  mu_ = estimates$rr.krig
+  estimates.rr.krig <- R_plot_mesh.ggplot(mesh = FEMbasis$mesh,
+                                          points_ = points_,
+                                          mu = mu_, 
+                                          color.min = min.col,
+                                          color.max = max.col,
+                                          line.size=line.size,
+                                          palette=p,
+                                          title = "RR-Krig")
+  
+pdf(imgfile_)
+estimates.true
+estimates.obs
+estimates.fdaPDE
+estimates.GWR
+estimates.lattice
+estimates.rr.krig
+dev.off()
+}
+

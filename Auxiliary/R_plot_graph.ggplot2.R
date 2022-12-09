@@ -89,7 +89,15 @@ R_plot_graph.a.sym.ggplot2<-function(FEM,title="",
   
 }
 
-
+# FEM, oggetto FEM da plottare (fem = FEM(coeff, FEMbasis))
+# title, titolo plot
+# legend.pos, posizione legenda
+# color.min, valore del colore più piccolo da inserire nella scala colore
+# color.max, valore del colore più grande da inserire nella scala colore
+# ratio, ratio fra asse x e asse y (consiglio lasciare valore di default)
+# palette, color palette (es jet.col, viridis, magma, inferno, plasma)
+# num.col, numero di colori della palette da generare
+# title.size, dimensione titolo plot
 R_plot_graph.ggplot2.2<-function(FEM,
                                  title="", 
                                  line.size=0.5,
@@ -98,9 +106,7 @@ R_plot_graph.ggplot2.2<-function(FEM,
                                  color.max=max(FEM$coeff),
                                  ratio = diff(range(mesh$nodes[,1]))/diff(range(mesh$nodes[,2]) ),
                                  palette = jet.col,
-                                 num.color = 128,
-                                 a.sym = FALSE,
-                                 return.ggplot.object = FALSE,
+                                 num.color = 28,
                                  title.size = 26){
   
   mesh=FEM$FEMbasis$mesh
@@ -110,30 +116,14 @@ R_plot_graph.ggplot2.2<-function(FEM,
   grp.nodes=vector(mode="integer")
   
   num_edges= dim(mesh$edges)[1]
-  if( !a.sym ){
     for(e in 1:num_edges){
       x = append(x, c(mesh$nodes[ mesh$edges[e,1], 1], mesh$nodes[ mesh$edges[e,2], 1]))
       y = append(y, c(mesh$nodes[ mesh$edges[e,1], 2], mesh$nodes[ mesh$edges[e,2], 2]))
       coef=append(coef, rep((FEM$coeff[mesh$edges[e,1]] + FEM$coeff[mesh$edges[e,2]])/2,times=2) )  
       grp.nodes = append(grp.nodes, rep(e,times=2))
-    }
-  }else{
-    for(e in 1:num_edges){
-      x = append(x, c(mesh$nodes[ mesh$edges[e,1], 1], mesh$nodes[ mesh$edges[e,2], 1]))
-      y = append(y, c(mesh$nodes[ mesh$edges[e,1], 2], mesh$nodes[ mesh$edges[e,2], 2]))
-      if( abs(FEM$coeff[mesh$edges[e,1]])<= 10*.Machine$double.eps 
-          ||
-          abs(FEM$coeff[mesh$edges[e,2]]) <= 10*.Machine$double.eps){
-        coef = append(coef, c(0.0, 0.0) )
-      }else{
-        coef= append(coef, rep( (FEM$coeff[mesh$edges[e,1]] + FEM$coeff[mesh$edges[e,2]]) /2,times=2) )  
-      }
-      grp.nodes = append(grp.nodes, rep(e,times=2))
-    }
-    
   }
   
-  p <- palette(n=num.color,alpha=0.8)
+  p <- palette(n=num.color,alpha=1)
   
   MyTheme <- theme(
     axis.text = element_text(size=(title.size-2)),
@@ -145,24 +135,7 @@ R_plot_graph.ggplot2.2<-function(FEM,
   )
   
   data=data.frame(x,y,grp.nodes,coef)
-  if(!return.ggplot.object){
-  ggplot(data=data, aes(x=x,y=y,group=grp.nodes)) + 
-    geom_point(alpha=0.0) + 
-    geom_line(aes(color=coef), size=line.size)+
-    scale_color_gradientn(colours=p, limits = c(color.min, color.max)) + 
-    labs(x="",y="",color="", title=title) +  
-    coord_fixed(ratio=ratio) + 
-    theme_void() +
-    theme(plot.title = element_text(hjust=0.5),
-          legend.title = element_blank(),
-          axis.title = element_blank(),
-          axis.text.x=element_blank(),
-          axis.text.y=element_blank(),
-          legend.key.width = unit(0.5,"cm"))
-  }
-  else{
-    
-    MyTheme <- theme(
+  MyTheme <- theme(
       axis.text = element_text(size=(title.size-2)),
       axis.title = element_text(size=title.size),
       title = element_text(size=title.size),
@@ -188,8 +161,8 @@ R_plot_graph.ggplot2.2<-function(FEM,
           legend.position = legend.pos)
   
   return (gplot)
-  }
 }
+
 
 # alternativa 
 
@@ -384,3 +357,86 @@ R_plot_mesh.ggplot = function(mesh, alpha = 1, line.size=0.5,
    
    }
 }
+
+R_plot_point_pattern.ggplot <- function(mesh, 
+                                       alpha = 1, 
+                                       line.size=0.5,
+                              points_ = NULL,
+                              points.size = 3,
+                              title = "",
+                              ratio = diff(range(mesh$nodes[,1]))/diff(range(mesh$nodes[,2])),
+                              col = "red3",
+                              title.size = 26,
+                              line.color="black")
+{
+  
+  x=vector(mode="double")
+  y=vector(mode="double")
+  grp.nodes=vector(mode="integer")
+  
+  num_edges= dim(mesh$edges)[1]
+  for(e in 1:num_edges){
+    x = append(x, c(mesh$nodes[ mesh$edges[e,1], 1], mesh$nodes[ mesh$edges[e,2], 1]))
+    y = append(y, c(mesh$nodes[ mesh$edges[e,1], 2], mesh$nodes[ mesh$edges[e,2], 2]))
+    grp.nodes = append(grp.nodes, rep(e,times=2))
+  }
+  
+  MyTheme <- theme(
+    axis.text = element_text(size=(title.size-2)),
+    axis.title = element_text(size=title.size),
+    title = element_text(size=title.size),
+    legend.text = element_text(size=(title.size-6)),
+    legend.key.size = unit(1,"cm"))
+  
+  if(is.null(points_) ){
+    
+    data=data.frame(x,y,grp.nodes)
+    
+    ret <- ggplot(data=data, aes(x=x,y=y,group=grp.nodes)) + 
+      geom_point(alpha=0.0) + 
+      geom_line(size=line.size, color=line.color)+
+      labs(x="",y="",color="", title=title) +  
+      coord_fixed(ratio=ratio) + 
+      theme_void() +
+      MyTheme +
+      theme(plot.title = element_text(hjust=0.5),
+            legend.title = element_blank(),
+            axis.title = element_blank(),
+            axis.text.x=element_blank(),
+            axis.text.y=element_blank(),
+            legend.key.width = unit(0.5,"cm"))
+    return(ret)
+  }else{
+  
+    data=data.frame(x,y,grp.nodes)
+    
+    num_points = nrow(points_)
+    
+    x.points = points_[,1]
+    y.points = points_[,2]
+    data.points = data.frame(x.points, y.points)
+    
+    ret <- ggplot(data=NULL) + 
+        geom_point(data=data, aes(x=x,y=y,group=grp.nodes), 
+                   alpha=0.0) + 
+        geom_line(data=data, aes(x=x,y=y,group=grp.nodes), 
+                  size=line.size) +
+        geom_point(data=data.points,aes(x=x.points,y=y.points),
+                   color=col,
+                   size=points.size) +
+        labs(x="",y="",color="", title=title) + 
+        coord_fixed(ratio=ratio) + 
+        theme_void() +
+        MyTheme +
+      theme(plot.title = element_text(hjust=0.5),
+            legend.title = element_blank(),
+            axis.title = element_blank(),
+            axis.text.x=element_blank(),
+            axis.text.y=element_blank(),
+            legend.key.width = unit(0.5,"cm"))
+    
+    return(ret)
+    }
+  }
+  
+
