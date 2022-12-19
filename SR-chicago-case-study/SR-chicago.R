@@ -10,29 +10,38 @@ edges = cbind( chicago$domain$from, chicago$domain$to)
 
 mesh = create.mesh.1.5D(nodes = vertices, edges = edges)
 
+x11()
 plot(mesh, pch=".")
-points(chicago$data$x, chicago$data$y, col = "red", pch=16)
+points(chicago$data$x, chicago$data$y, col = "red", pch=16, cex=2.5)
 
 ### FAMILY - poisson ###
 delta = 65
 new_to_old  = refine1D(mesh$nodes, mesh$edges, delta)$new_to_old
 mesh = refine.mesh.1.5D(mesh, delta=delta)
 FEMbasis = create.FEM.basis(mesh)
-incidence_matrix = matrix(0, nrow=chicago$domain$lines$n, ncol=nrow(mesh$edges))
+
+#setting regions 
+nregion = 10
+# lines == true edges of the network / edges == edges of the discretized network
+# lines_to_region <- set_region(sources_ = c(47, 91, 67, 124, 151, 169, 195, 251, 275, 302))
+
+incidence_matrix = matrix(0, nrow=nregion, ncol=nrow(mesh$edges))
 
 for(i in 1:nrow(new_to_old)){
-  incidence_matrix[ new_to_old[i],i] = 1
+  incidence_matrix[ lines_to_region[new_to_old[i]],i] = 1
 }
 
-response = rep(0, times= chicago$domain$lines$n)
+response = rep(0, times= nregion)
 
 for( i in chicago$data$seg){
-  response[i] = response[i] + 1
+  response[lines_to_region[i]] = response[lines_to_region[i]] + 1
 }
 range(response)
-lambda = 10^seq(from=-3,to=5,length.out=500)
 
-#lambda = runif(10,min=650,max=1000)
+x11()
+plot_region(lines_to_region, response)
+
+lambda = 10^seq(from=-5,to=-4,length.out=10)
 
 output_CPP <- smooth.FEM(observations = response,
                          covariates = NULL,
@@ -44,9 +53,12 @@ output_CPP <- smooth.FEM(observations = response,
                          DOF.evaluation = "exact",
                          family="poisson")
 
-plot(log10(lambda), output_CPP$optimization$GCV_vector, xlab="log10(lambda)", ylab="GCV")
 
 lambda_opt <- output_CPP$optimization$lambda_position
+
+x11()
+plot(log10(lambda), output_CPP$optimization$GCV_vector, xlab="log10(lambda)", ylab="GCV")
+
 plot(FEM(output_CPP$fit.FEM$coeff[,lambda_opt],FEMbasis = FEMbasis))
 
 Mass = fdaPDE::CPP_get.FEM.Mass.Matrix(FEMbasis)

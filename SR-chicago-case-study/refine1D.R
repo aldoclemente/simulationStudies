@@ -129,3 +129,48 @@ trapezoidal <- function(f,point1, point2){
  I = (f[1] + f[2])/2 * delta
  return(I)
 }
+
+set_region <- function(sources_, LN = chicago){
+
+    lpp_sources <- spatstat.linnet::lpp(X= ppp(LN$domain$vertices$x[sources_], y=LN$domain$vertices$y[sources_], window= LN$domain$window), 
+                                        L= LN$domain)
+
+    nedges = LN$domain$lines$n
+    mid_points = matrix(0, nrow=nedges, ncol=2)
+    for(e in 1:nedges){  
+        mid_points[e,1] =  ( LN$domain$vertices$x[ LN$domain$from[e]] + LN$domain$vertices$x[ LN$domain$to[e]] )/2
+        mid_points[e,2] =  ( LN$domain$vertices$y[ LN$domain$from[e]] + LN$domain$vertices$y[ LN$domain$to[e]] )/2
+    }
+
+    lpp_midpoints <- spatstat.linnet::lpp(X = ppp(x=mid_points[,1], y= mid_points[,2], window= LN$domain$window),
+                                          L = LN$domain)
+
+    network_dist = spatstat.linnet::crossdist.lpp(lpp_midpoints, lpp_sources)
+    edges_to_region = matrix(0, nrow = nedges, ncol=1)
+
+    for(e in 1:nedges) edges_to_region[e] = which( network_dist[e,] == min(network_dist[e,]) )
+
+    return(edges_to_region)
+}
+
+plot_region <-function(lines_to_region, 
+                       response,
+                       LN = chicago, 
+                       mesh = fdaPDE::create.mesh.1.5D(nodes=cbind(LN$domain$vertices$x, LN$domain$vertices$y),
+                                                       edges=cbind(LN$domain$from, LN$domain$to))){
+   nregion = max(lines_to_region)
+   set.seed(NULL)
+   set.seed(314156)
+   colors_ = jet.col(nregion)
+   colors_ = sample(colors_, nregion)
+
+   plot(mesh, pch=".")
+   for(e in 1:LN$domain$lines$n){
+    segments(LN$domain$vertices$x[LN$domain$from[e]], LN$domain$vertices$y[LN$domain$from[e]], 
+             LN$domain$vertices$x[LN$domain$to[e]], LN$domain$vertices$y[LN$domain$to[e]], 
+                   col = colors_[lines_to_region[e]], lwd=4.5)
+
+  }
+  legend("topright", legend=response, col=colors_, lwd=7)
+                                                      
+}
