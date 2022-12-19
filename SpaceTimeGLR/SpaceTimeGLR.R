@@ -5,7 +5,7 @@
 ############################
 
 
-setwd("SpaceTimeGLR")
+setwd("SpaceTimeGLR/")
 library(plotrix)
 source("../utils.R")
 source("../SpatialRegression-NoCovariate/NoCovariatesCore.R")
@@ -210,7 +210,7 @@ if(!dir.exists("img/")) {
   dir.create("img/")
 }
 
-palette = "ggplot" # "viridis" "magma
+palette = "viridis" # "viridis" "magma
 imgfile_ = paste("img/SpaceTimeGLR-",palette,".pdf",sep="")
 
 if(palette == "ggplot")
@@ -220,7 +220,7 @@ if(palette == "ggplot")
 rmse <- boxplot_RMSE(RMSE=RMSE,
              n_data=n_data,
              model=c(T,F,F,F),names_ = c("GST-PDE","","",""),
-             palette=palette,begin=0.65,end=0.65)
+             palette=palette,begin=0.25,end=0.25)
 
 pdf(imgfile_)
 print(rmse)
@@ -241,4 +241,132 @@ boxplot_RMSE(RMSE, n_data, model_ = c(T,F,F,F),
              names_ = c("SR-PDE","","",""),
              legend.pos = c(0.825,0.8625), palette=palette,
              colors=colors )
+dev.off()
+
+imgfile.6plots = paste("img/SpaceTimeGLR-6plots-", palette,".pdf",sep="")
+SpaceTime6Plots(imgfile = imgfile.6plots,
+                FEMbasis = FEMbasis,
+                time_locations = time_locations,
+                field = field,
+                mean.field.fdaPDE = mean.field.fdaPDE,
+                palette =palette,
+                line.size=0.5)
+
+
+
+#############################################################
+
+den = 2 
+time_locations = seq(from=0.,to=pi/den,length.out=12) # pi/3 ok
+n_time_locs = length(time_locations)
+
+ND.space.only = compute_NetworkDist_matrix(mesh, 1:nnodes)
+ND.space.time = matrix(nrow=nnodes*n_time_locs, ncol=nnodes*n_time_locs)
+
+for(i in 1:n_time_locs){
+  for( j in 1:n_time_locs){
+    ND.space.time[(1 +(i-1)*nnodes):(i*nnodes), 
+                  (1 +(j-1)*nnodes):(j*nnodes)] = ND.space.only
+  }
+}
+# data 
+x.loc = rep(mesh$nodes[,1], times=length(time_locations))
+y.loc = rep(mesh$nodes[,2], times=length(time_locations))
+space.locations = cbind(x.loc, y.loc)
+time.locations = rep(time_locations, each=nrow(mesh$nodes))
+
+space.time.locations = cbind(space.locations, time.locations)
+
+field = fun.time(func,func.time)(ND.space.time, time_locations, 
+                                 source = 63,sigma = 2.5)
+field.2 = fun.time(func,func.time)(ND.space.time, time_locations,
+                                   source = 1308, sigma = 1.25)
+field.3 = fun.time(func,func.time)(ND.space.time, time_locations,
+                                   source = 1018,sigma = 2)
+field.4 = fun.time(func,func.time)(ND.space.time, time_locations,
+                                   source = 1125,sigma = 1.25)
+field = field + field.2 + field.3 + field.4
+
+# Test 1: ONTARIO (func -> EXP) 
+#betas= c(1,1)
+#W = matrix(nrow=nnodes*length(time_locations), ncol=2)
+#W[,1] = rnorm(nnodes*length(time_locations), mean=0.5,sd=0.25)
+#W[,2] = 1/4 * fun("sin")(ND.space.only, source=63, sigma=10)
+W = NULL
+signal = field  #+ W%*%betas
+param = signal 
+
+mu<-inv.link(param)
+range(param)
+
+response <- as.numeric(rpois(nnodes*n_time_locs, lambda = mu)) 
+range(response)
+n_data=100
+tmp.sample_ = sample(x=(1:nnodes), size=n_data)
+sample_ = vector(mode="integer")
+for(k in 1:length(time_locations)){
+  sample_ = cbind(sample_, tmp.sample_ + (k-1)*nnodes)
+}
+sample_ = as.vector(sample_)
+
+locations = mesh$nodes[tmp.sample_,]
+
+observations_ = response[sample_]
+
+estimates = list()
+estimates$locations = locations
+estimates$response = observations_
+
+estimates$param = param[sample_]
+estimates$param = matrix(estimates$param, nrow=n_data, ncol=length(time_locations))
+estimates$response = matrix(estimates$response, nrow=n_data, ncol=length(time_locations))
+
+min.col = min(estimates$param)
+max.col = max(estimates$param)
+
+library(viridis)
+library(ggplot2)
+library(latex2exp)
+library(grid)
+library(gridExtra)
+source("../Auxiliary/R_plot_graph.ggplot2.R")
+source("../SpatialRegression-NoCovariate/NoCovariatesCore.R")
+p=viridis
+estimates.obs = list()
+estimates.response = list()
+pdf("Space-Time-GLR-observations-time.pdf")
+
+for(i in 1:length(time_locations)){
+
+  estimates.obs[[i]] <- R_plot_mesh.ggplot(mesh = mesh,
+                                    points_ = estimates$locations,
+                                    mu = estimates$param[,i], 
+                                    color.min = min.col,
+                                    color.max = max.col,
+                                    line.size=1,
+                                    palette=p,
+                                    title = bquote(g(mu[ij]) == f(bold(p)[i], t_j)) )
+
+  print(estimates.obs[[i]])
+}
+dev.off()
+
+
+min.col = min(estimates$response)
+max.col = max(estimates$response)
+
+pdf("Space-Time-GLR-response-time.pdf")
+for(i in 1:length(time_locations)){
+estimates.response[[i]] <- R_plot_mesh.ggplot(mesh = mesh,
+                                              points_ = estimates$locations,
+                                              mu = estimates$response[,i], 
+                                              color.min = min.col,
+                                              color.max = max.col,
+                                              line.size=1,
+                                              palette=p,
+                                              title = bquote(y[ij]) )
+
+
+print(estimates.response[[i]])
+}
 dev.off()

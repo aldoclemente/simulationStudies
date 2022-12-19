@@ -126,3 +126,25 @@ save(tot.time, RMSE.prediction, betas,
      mean.field.estimate, 
      FEMbasis, file=filename)
 }
+
+
+library(viridis)
+pdf("LondonObs2.pdf")
+R_plot_mesh.ggplot(mesh=mesh, alpha = 1, line.size=0.25,
+                   points_ = LN.data@coords, 
+                   points.size = 0.25,
+                   mu = LN.data$PURCHASE,
+                   palette = viridis,
+                   title.size = 26,
+                   legend.pos = "right",
+                   line.color="black")
+
+R_plot_mesh.ggplot(mesh=mesh, alpha = 1, line.size=0.25,
+                   points_ = LN.data@coords, 
+                   points.size = 0.125,
+                   mu = LN.data$PURCHASE,
+                   palette = viridis,
+                   title.size = 26,
+                   legend.pos = "right",
+                   line.color="black")
+dev.off()

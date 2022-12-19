@@ -352,6 +352,15 @@ print(secondCov.example.1)
 print(secondCov.example.2)
 print(secondCov.example.3)
 print(secondCov.example.4)
+
+for( i in 1:n.locs.time){
+  print(true.spatial.field[[i]])
+}
+
+for( i in 1:n.locs.time){
+  print(mean.field.fdaPDE.4[[i]])
+}
+
 dev.off()
 
 

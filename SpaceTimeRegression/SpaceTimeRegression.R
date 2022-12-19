@@ -232,3 +232,12 @@ boxplot_RMSE(RMSE, n_data, model_ = c(T,T,F,F),
              colors=colors,
              ylim = c(0,0.45) )
 dev.off()
+
+imgfile.6plots = paste("img/SpaceTime-6plots-", palette,".pdf",sep="")
+SpaceTime6Plots(imgfile = imgfile.6plots,
+                FEMbasis = FEMbasis,
+                time_locations = time_locations,
+                field = field,
+                mean.field.fdaPDE = mean.field.fdaPDE,
+                palette =palette,
+                line.size=0.5)

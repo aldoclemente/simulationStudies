@@ -85,11 +85,33 @@ invisible(capture.output(
                               n_sim, n_data, lambda,lambda.2D, mesh,
                               FEMbasis, FEMbasis.2D,
                               true.signal = signal,
-                              model_=c(T,T,T,F), betas, W) ))
+                              model_=c(T,T,F,F), betas, W) ))
 
+
+head="estimates"
+tail_= "method"
+
+betas=c(0.05, 1)
+n_data = c(250)
+for(i in 1:4){
+betas[1] = betas[1] / 2  
+signal = field + W%*%betas
+observations = signal + rnorm(nnodes, mean=0, sd=0.05*diff(range(signal)))
+n_data = c(250)
+
+sink(paste(.Platform$OS.type,"-",i,".txt", sep=""))
+n_sim = 1
+results <- WithCovariatesCore(ND_, ED_, observations,
+                   n_sim, n_data, lambda,lambda.2D, mesh,
+                   FEMbasis, FEMbasis.2D,
+                   true.signal = signal,
+                   model_=c(T,F,F,F), betas, W) 
+sink()
+}
 results$tot.time
 RMSE = results$RMSE
 mean.field.fdaPDE = results$mean.field.fdaPDE
+estimates = results$estimates
 
 boxplot_RMSE(RMSE, n_data, model_ = c(T,T,T,F),
              names_ = c("fdaPDE","GWR","lattice","fdaPDE.2D"))
@@ -115,6 +137,7 @@ save(RMSE,
      imgfile_, 
      FEMbasis,
      W, betas,
+     estimates,
      file = filename_)
 
 
@@ -142,9 +165,9 @@ RegressionWithCovPlots(imgfile=imgfile_,
 
 colors = viridis(n=2, begin=0.95, end=0.25)
 
-pdf("img/RMSE-Cov.pdf")
+pdf("img/RMSE-Cov.pdf",width=16)
 boxplot_RMSE(RMSE, n_data, model_ = c(T,T,F,F), 
                      names_ = c("SR-PDE","GWR","",""),
-                     legend.pos = c(0.825,0.8625), palette=palette,
-                     colors=colors)
+                     legend.pos = c(0.8625,0.8625), palette=palette,
+                     colors=colors, width=0.5)
 dev.off()

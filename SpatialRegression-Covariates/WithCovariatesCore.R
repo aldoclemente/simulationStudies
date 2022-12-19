@@ -224,6 +224,7 @@ WithCovariatesCore <- function(ND_, ED_, observations_,
   adj_matrix = tmp$adj_matrix
   T_matrix = makeTranMatrix(adj_matrix, M = 0.5)
   ##############################################
+  estimates = list()
   
   for(j in 1:length(n_data)){  
     for(i in 1:n_sim){
@@ -233,6 +234,14 @@ WithCovariatesCore <- function(ND_, ED_, observations_,
       locations = mesh$nodes[sample_,]
       
       observations = observations_[sample_]
+      
+      if(i==1 && j == 1){ 
+        estimates$locations = locations
+        estimates$observations = observations
+        estimates$true.signal = true.signal[sample_]
+        estimates$X1 = W[sample_,1]
+        estimates$X2 = W[sample_,2]
+      }
       
       #ND = ND_[sample_, sample_]
       #ED = ED_[sample_, sample_]
@@ -253,7 +262,11 @@ WithCovariatesCore <- function(ND_, ED_, observations_,
         prediction = eval.FEM(output_CPP$fit.FEM, locations = locations) +
           W[sample_,]%*%output_CPP$solution$beta
         RMSE.fdaPDE[i,j] = rmse(true.signal[sample_], prediction)
-        mean.field.fdaPDE[,j] = mean.field.fdaPDE[,j] + output_CPP$fit.FEM$coeff / n_sim 
+        mean.field.fdaPDE[,j] = mean.field.fdaPDE[,j] + output_CPP$fit.FEM$coeff / n_sim
+        
+        if(i==1 && j == 1){ 
+          estimates$fdaPDE = prediction 
+        }
       }
       ### GWR ### 
       
@@ -280,6 +293,9 @@ WithCovariatesCore <- function(ND_, ED_, observations_,
         
         RMSE.GWR.ND[i,j] = rmse(GWR.ND$SDF$yhat,true.signal[sample_])
         
+        if(i==1 && j == 1){ 
+          estimates$GWR = GWR.ND$SDF$yhat 
+        }
       }
       # lattice based method
       if(model_[3]){
@@ -325,6 +341,60 @@ WithCovariatesCore <- function(ND_, ED_, observations_,
                RMSE.lattice  = RMSE.lattice,
                RMSE.fdaPDE.2D = RMSE.fdaPDE.2D)
   
-  res_ = list(RMSE = RMSE, tot.time=tot.time, mean.field.fdaPDE=mean.field.fdaPDE)
+  res_ = list(RMSE = RMSE, tot.time=tot.time, mean.field.fdaPDE=mean.field.fdaPDE, estimates = estimates)
   return(res_)
 }
+
+
+library(aod)
+library(Matrix)
+BetaInference <- function(FEMbasis, 
+                          nobs, 
+                          sample_, 
+                          covariates, 
+                          lambda, 
+                          observations, 
+                          fitted.values,
+                          beta.hat){
+  
+  # Inference example #
+  nnodes = nrow(FEMbasis$mesh$nodes)
+  
+  R1 = CPP_get.FEM.Stiff.Matrix(FEMbasis = FEMbasis)
+  R0 = CPP_get.FEM.Mass.Matrix(FEMbasis = FEMbasis)
+  
+  P = t(R1)%*%solve(R0)%*%R1
+  X = covariates # n x p
+  Psi = Matrix(data=0, nrow = nobs , ncol = nnodes, sparse =TRUE) # n x N
+  Psi <- as(Psi, "dgCMatrix")
+  for(i in 1:nobs){
+    Psi[i, sample_[i]] = 1
+  }
+  
+  I = Matrix(data=0, nrow=nobs, ncol=nobs, sparse = TRUE)
+  I <- as(I, "dgCMatrix")
+  for(i in 1:nobs){
+    I[i,i] = 1
+  }
+  
+  invXtX = solve(t(X)%*%X) # (p x n) X (n x p) = p x p 
+
+  Q = I - X %*% invXtX %*% t(X) # n x n
+  Q <- as(Q, "dgCMatrix")
+  S = Psi%*%solve(t(Psi)%*%Q%*%Psi + lambda*P)%*%t(Psi)%*%Q # (n x N) [(N x n) (n x n) (n x N) + N x N ]  (N x n) (n x n) = n x n
+  z_hat =  fitted.values # n
+  sigma2_hat = 1/(nnodes - ncol(X) - sum(diag(S)))*t((z_hat - observations))%*%(z_hat - observations)
+  
+  #SIGMA_hat = sigma2_hat * (I-Q-Q%*%S)%*%t((I-Q-Q%*%S))
+  
+  SIGMA_beta = sigma2_hat * ( invXtX + invXtX%*%t(X)%*%S%*%t(S)%*%X%*%invXtX) # p x p 
+  print("Complete Wald Test:")
+  print(wald.test(Sigma=SIGMA_beta, b = beta.hat , Terms = 1:ncol(X))) 
+  
+  for(i in 1:ncol(X)){
+    print(paste("Wald Test for :", i , " coeff", sep=""))
+    print(wald.test(Sigma=SIGMA_beta, b = beta.hat , Terms = i))
+  }
+  
+}
+

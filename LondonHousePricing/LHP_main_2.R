@@ -1,3 +1,4 @@
+setwd("LondonHousePricing/")
 source("../utils.R")
 source("LNH_utils.R")
 data(LNNT)
@@ -88,7 +89,7 @@ for(i in 1:K){
   X = cbind( train_data$FLOORSZ, 
              train_data$PROF,   #, 
              train_data$BATH2) #, 
-  lambda = seq(from=3,to=10,length.out=20) 
+  lambda = seq(from=1e-12,to=1e-8,length.out=100) #*10^3
   output_CPP = smooth.FEM(observations = train_data$PURCHASE, 
                           locations = train_data@coords,
                           FEMbasis = FEMbasis,
@@ -98,6 +99,7 @@ for(i in 1:K){
                           lambda.selection.lossfunction = "GCV",
                           DOF.evaluation = "stochastic")
   
+  x11()
   plot(log10(lambda), output_CPP$optimization$GCV_vector)
   
   beta1 = output_CPP$solution$beta[1]

@@ -1,6 +1,7 @@
 library(gridExtra)
 library(ggplot2)
 library(latex2exp)
+library(viridis)
 source("../Auxiliary/R_plot_graph.ggplot2.R")
 
 # length(n_data) == 4
@@ -232,3 +233,117 @@ RegressionWithCovPlots<-function(imgfile,
   print(secondCov.example.4)
   dev.off()
 }
+
+plotting.estimates <- function(imgfile_,
+                               estimates,
+                               FEMbasis,
+                               W,
+                               line.size=0.5){
+  p = viridis
+  points_ = estimates$locations
+  observations = estimates$observations # 
+  true.signal = estimates$true.signal
+  
+  max.col = max(true.signal, estimates$fdaPDE)
+  min.col = min(true.signal, estimates$fdaPDE)
+  
+  max.col = max(max.col, estimates$GWR)
+  min.col = min(min.col, estimates$GWR)
+  
+  
+  mu_ = true.signal
+  estimates.true <- R_plot_mesh.ggplot(mesh = FEMbasis$mesh,
+                                       points_ = points_,
+                                       mu = mu_, 
+                                       color.min = min.col,
+                                       color.max = max.col,
+                                       line.size=line.size,
+                                       palette=p,
+                                       title = "TRUE")
+  
+  mu_ = observations
+  estimates.obs <- R_plot_mesh.ggplot(mesh = FEMbasis$mesh,
+                                       points_ = points_,
+                                       mu = mu_, 
+                                       color.min = min.col,
+                                       color.max = max.col,
+                                       line.size=line.size,
+                                       palette=p,
+                                       title = bquote(y[i] == bold(x)[i]^T * bold(beta) + f(bold(p)[i]) + epsilon[i]) ) 
+  
+  
+  mu_ = estimates$fdaPDE
+  estimates.fdaPDE <- R_plot_mesh.ggplot(mesh = FEMbasis$mesh,
+                                         points_ = points_,
+                                         mu = mu_, 
+                                         color.min = min.col,
+                                         color.max = max.col,
+                                         line.size=line.size,
+                                         palette=p,
+                                         title = "SR-PDE")
+  
+  mu_ = estimates$GWR
+  estimates.GWR <- R_plot_mesh.ggplot(mesh = FEMbasis$mesh,
+                                      points_ = points_,
+                                      mu = mu_, 
+                                      color.min = min.col,
+                                      color.max = max.col,
+                                      line.size=line.size,
+                                      palette=p,
+                                      title = "GWR")
+  
+  mu_ = estimates$X1
+  estimates.X1 <- R_plot_mesh.ggplot(mesh = FEMbasis$mesh,
+                                      points_ = points_,
+                                      mu = mu_, 
+                                      #color.min = min.col,
+                                      #color.max = max.col,
+                                      line.size=line.size,
+                                      palette=p,
+                                      title = bquote(X[{1}[i]]))
+  
+  mu_ = estimates$X2
+  estimates.X2 <- R_plot_mesh.ggplot(mesh = FEMbasis$mesh,
+                                      points_ = points_,
+                                      mu = mu_, 
+                                      #color.min = min.col,
+                                      #color.max = max.col,
+                                      line.size=line.size,
+                                      palette=p,
+                                      title = bquote(X[{2}[i]]))
+  
+  firstCov <- R_plot_graph.ggplot2.2(FEM(W[,1], FEMbasis),
+                                     line.size = line.size,
+                                     title = bquote(X[1]), #"First Covariate", #expression(hat(f) ~ paste("(n=",n_data[1],")",sep="")),
+                                     return.ggplot.object = T,
+                                     palette=p,
+                                     legend.pos = "right")
+  
+  secondCov <- R_plot_graph.ggplot2.2(FEM(W[,2], FEMbasis),
+                                      line.size = line.size,
+                                      title = bquote(X[2]), # second covariate
+                                      return.ggplot.object = T, 
+                                      palette=p,
+                                      legend.pos = "right")
+  
+  secondCov.i <- R_plot_graph.ggplot2.2(FEM(W[,2], FEMbasis),
+                                      line.size = line.size,
+                                      title = bquote( X[{2}[i]] ), # second covariate
+                                      return.ggplot.object = T, 
+                                      palette=p,
+                                      legend.pos = "right")
+  
+  
+  pdf(imgfile_)
+  estimates.true
+  estimates.obs
+  estimates.fdaPDE
+  estimates.GWR
+  estimates.X1
+  estimates.X2
+  firstCov
+  secondCov
+  secondCov.i
+  dev.off()
+}
+
