@@ -12,18 +12,29 @@ mesh = create.mesh.1.5D(nodes = vertices, edges = edges)
 
 x11()
 plot(mesh, pch=".")
-points(chicago$data$x, chicago$data$y, col = "red", pch=16, cex=2.5)
+points(chicago$data$x, chicago$data$y, col = "red", pch=16, cex=1.5)
 
 ### FAMILY - poisson ###
-delta = 65
-new_to_old  = refine1D(mesh$nodes, mesh$edges, delta)$new_to_old
+delta = 150
+
 mesh = refine.mesh.1.5D(mesh, delta=delta)
 FEMbasis = create.FEM.basis(mesh)
+new_to_old  = refine1D(mesh$nodes, mesh$edges, delta)$new_to_old
 
 #setting regions 
 nregion = 10
 # lines == true edges of the network / edges == edges of the discretized network
-# lines_to_region <- set_region(sources_ = c(47, 91, 67, 124, 151, 169, 195, 251, 275, 302))
+data_ = cbind(LN$data$x, LN$data$y)
+result_ <- kmeans(x=data_, centers=nregion, iter.max = 100)
+centroids_ = projection.points.1.5D(mesh, locations= result_$centers)
+
+x11()
+plot(mesh, pch=".")
+points(result_$centers, col="blue", pch = 16, cex=2)
+points(data_, col="red", pch=16, cex=2)
+points(centroids_, col="green4", pch=16, cex=2)
+
+lines_to_region <- set_region(centroids_, mesh=mesh)
 
 incidence_matrix = matrix(0, nrow=nregion, ncol=nrow(mesh$edges))
 
@@ -39,7 +50,7 @@ for( i in chicago$data$seg){
 range(response)
 
 x11()
-plot_region(lines_to_region, response)
+plot_region(lines_to_region, response, LN=chicago,mesh=mesh)
 
 lambda = 10^seq(from=-5,to=-4,length.out=10)
 

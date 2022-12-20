@@ -130,22 +130,22 @@ trapezoidal <- function(f,point1, point2){
  return(I)
 }
 
-set_region <- function(sources_, LN = chicago){
+set_region <- function(centroids_, mesh, LN = chicago){
 
-    lpp_sources <- spatstat.linnet::lpp(X= ppp(LN$domain$vertices$x[sources_], y=LN$domain$vertices$y[sources_], window= LN$domain$window), 
+    lpp_centroids <- spatstat.linnet::lpp(X= ppp(centroids_[,1], y=centroids_[,2], window= LN$domain$window), 
                                         L= LN$domain)
 
-    nedges = LN$domain$lines$n
+    nedges = nrow(mesh$edges)
     mid_points = matrix(0, nrow=nedges, ncol=2)
     for(e in 1:nedges){  
-        mid_points[e,1] =  ( LN$domain$vertices$x[ LN$domain$from[e]] + LN$domain$vertices$x[ LN$domain$to[e]] )/2
-        mid_points[e,2] =  ( LN$domain$vertices$y[ LN$domain$from[e]] + LN$domain$vertices$y[ LN$domain$to[e]] )/2
+        mid_points[e,1] =  ( mesh$nodes[ mesh$edges[e,1],1] + mesh$nodes[ mesh$edges[e,2],1] )/2
+        mid_points[e,2] =  ( mesh$nodes[ mesh$edges[e,1],2] + mesh$nodes[ mesh$edges[e,2],2] )/2
     }
 
     lpp_midpoints <- spatstat.linnet::lpp(X = ppp(x=mid_points[,1], y= mid_points[,2], window= LN$domain$window),
                                           L = LN$domain)
 
-    network_dist = spatstat.linnet::crossdist.lpp(lpp_midpoints, lpp_sources)
+    network_dist = spatstat.linnet::crossdist.lpp(lpp_midpoints, lpp_centroids)
     edges_to_region = matrix(0, nrow = nedges, ncol=1)
 
     for(e in 1:nedges) edges_to_region[e] = which( network_dist[e,] == min(network_dist[e,]) )
@@ -164,11 +164,13 @@ plot_region <-function(lines_to_region,
    colors_ = jet.col(nregion)
    colors_ = sample(colors_, nregion)
 
+   nedges = nrow(mesh$edges)
    plot(mesh, pch=".")
-   for(e in 1:LN$domain$lines$n){
-    segments(LN$domain$vertices$x[LN$domain$from[e]], LN$domain$vertices$y[LN$domain$from[e]], 
-             LN$domain$vertices$x[LN$domain$to[e]], LN$domain$vertices$y[LN$domain$to[e]], 
-                   col = colors_[lines_to_region[e]], lwd=4.5)
+   for(e in 1:nregion){
+    mask_ = which(lines_to_region == e)
+    segments(mesh$nodes[mesh$edges[mask_,1],1], mesh$nodes[mesh$edges[mask_,1],2],
+             mesh$nodes[mesh$edges[mask_,2],1],  mesh$nodes[mesh$edges[mask_,2],2],
+             col = colors_[e], lwd=4.5)
 
   }
   legend("topright", legend=response, col=colors_, lwd=7)

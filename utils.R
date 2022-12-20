@@ -4,8 +4,8 @@ library(maptools)
 library(shp2graph)
 library(igraph)
 library(rgeos)
-library(GWmodel)
-library(diffusionMaps)
+#library(GWmodel)
+#library(diffusionMaps)
 
 
 #' Utility to convert fdaPDE Linear Network mesh into SpatialLinesDataFrame. 
