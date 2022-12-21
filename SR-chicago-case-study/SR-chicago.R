@@ -22,9 +22,9 @@ FEMbasis = create.FEM.basis(mesh)
 new_to_old  = refine1D(mesh$nodes, mesh$edges, delta)$new_to_old
 
 #setting regions 
-nregion = 10
+nregion = 6 #10
 # lines == true edges of the network / edges == edges of the discretized network
-data_ = cbind(LN$data$x, LN$data$y)
+data_ = cbind(chicago$data$x, chicago$data$y)
 result_ <- kmeans(x=data_, centers=nregion, iter.max = 100)
 centroids_ = projection.points.1.5D(mesh, locations= result_$centers)
 
