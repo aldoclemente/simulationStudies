@@ -83,16 +83,16 @@ y = matrix(data = rep(1,times=N[i]*N[i]))
 y = matrix(data = rnorm(N[i]*N[i], mean = 1, sd =0.5))
 # lrw (stodes) 
 print(system.time(
-  y <- steady.2D(y=y,
+  Y <- steady.2D(y=y,
                  dimens = c(N[i],N[i]), 
                  time = 0, 
                  func = Adv.Diff, parms=NULL, lrw=1e8) ) )
 
-y.hat <- matrix(y$y, nrow=N[i], ncol=N[i])
+y.hat <- matrix(Y$y, nrow=N[i], ncol=N[i])
 par(mfrow=c(1,2))
 image(y.ex, ask = FALSE, main = "exact")
 image(y.hat, ask = FALSE, main = "estimate")
-errors.l2[i] = rmse(y$y, as.vector(y.ex))
+errors.l2[i] = rmse(Y$y, as.vector(y.ex))
 }
 
 q = log2(errors.l2[1:(length(N)-1)]/errors.l2[2:length(N)])
@@ -107,3 +107,9 @@ legend("topleft", legend=c(TeX("$\\| u - u_{ex} \\|_{2}$"), TeX("$h^2$")),
        col=c("red", "black"), 
        lty = 1.5, 
        cex=0.75)
+
+
+microbenchmark("solution" = {Y <- steady.2D(y=y$y,
+                                            dimens = c(N[i],N[i]), 
+                                            time = 0, 
+                                            func = Adv.Diff, parms=NULL, lrw=1e8) })
