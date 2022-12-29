@@ -176,3 +176,14 @@ plot_region <-function(lines_to_region,
   legend("topright", legend=response, col=colors_, lwd=7)
                                                       
 }
+
+plot_nodes<-function(mesh){
+  
+  pdf("nodes.pdf")
+  for(i in 1:nrow(mesh$nodes)){
+    print(plot(mesh,pch=".", main=paste("node ",i,sep="")))
+    print(points(mesh$nodes[i,1],mesh$nodes[i,2], pch=16, col="red3"))
+  }
+  dev.off()
+  
+}

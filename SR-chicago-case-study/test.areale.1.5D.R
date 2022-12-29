@@ -311,26 +311,24 @@ boxplot(L2.error, main="L2 error")
 ################################################################################
 ### TEST AREALE GLM ###
 # family
+setwd("SR-chicago-case-study/")
 library(fdaPDE)
 library(purrr)
 rm(list=ls())
 graphics.off()
 source("refine1D.R")
 
-# family
+#family
 FAMILY = "poisson"
-
 l<-make.link("log")
 link<-l$linkfun
 inv.link<-l$linkinv
 
-# beta
-beta1 = 0.5
-beta2 = -0.2
-betas_truth = c(beta1,beta2)
-
-# lambda 
-lambda = 10^seq(-2,0,length.out = 10)
+# FAMILY = "binomial"
+# logit <- function(x){qlogis(x)}
+# inv.logit <- function(x){plogis(x)}
+# link = logit
+# inv.link = inv.logit
 
 # scale param
 scale.param = 1
@@ -361,9 +359,7 @@ nnodes=dim(mesh$nodes)[1]
 FEMbasis=create.FEM.basis(mesh)
 plot(mesh, asp=1)
 
-I_region = matrix(0, nrow=nregion, ncol=1)
-
-incidence_matrix = matrix(0, nrow=nrow(I_region), ncol=nrow(mesh$edges))
+incidence_matrix = matrix(0, nrow=nregion, ncol=nrow(mesh$edges))
 for(i in 1:nrow(new_to_old)){
   incidence_matrix[ new_to_old[i],i] = 1
 }
@@ -379,7 +375,7 @@ aux.4 = function(x,y){
   for(i in idx.ok){
     delta = abs(points_[i,1] - mesh$nodes[source,1])
     if(delta < h ){
-      coef[i] = 3*exp(1/(delta^2 / h^2 -1)+1 ) - 1
+      coef[i] = (3*exp(1/(delta^2 / h^2 -1)+1 ) - 1)
       
     }
   }
@@ -423,11 +419,12 @@ aux.1 = function(x,y){
 }  
 f = function(x,y){
   
-  res = 1.05*(aux.1(x,y) + aux.3(x,y) + aux.4(x,y))
+  res = (aux.1(x,y) + aux.3(x,y) + aux.4(x,y))
   return(res)
 }
 
 sol_exact=f(mesh$nodes[,1],mesh$nodes[,2])
+I_region = matrix(0, nrow= nregion, ncol= 1) 
 for(i in 1:nregion){
   for(e in idxs[[i]]){
     I_region[i] = I_region[i] + trapezoidal(c(sol_exact[mesh$edges[e,1]], sol_exact[mesh$edges[e,2]]),
@@ -447,54 +444,62 @@ for(i in 1:nregion){
   lens_region[i] = sum( lens[which(incidence_matrix[i,]==1)] )
 }
 
-# covariates
-set.seed(42)
-
-desmat=matrix(0,nrow=nregion, ncol=2)
-desmat[,1]= rnorm(nregion, mean=2, sd=0.5)
-desmat[,2]= rnorm(nregion, mean=0,sd=1)
-
-# samopling response
-param= I_region/lens_region # + desmat%*%betas_truth 
+# samoling response
+X = matrix(rbeta(nregion,1,2), nrow=nregion, ncol=1)
+beta_ = 1.
+param= beta_*X + I_region #/lens_region # + desmat%*%betas_truth 
 ran=range(param) 
 
 mu<-inv.link(param)
 range(mu)
 response <- rpois(nregion, lambda = mu)
+#response <- rbernoulli(nregion, mu)
 range(response)
 
-lambda = 10^seq(-6.,-3,length.out = 20)
+#lambda = 10^seq(-4.,0,length.out = 250)
 
-output_CPP<- smooth.FEM(observations = as.numeric(response), FEMbasis =FEMbasis, # covariates = desmat,
+lambda = 10^seq(-2.,2,length.out = 1000)
+output_CPP<- smooth.FEM(observations = as.numeric(response), FEMbasis =FEMbasis, 
+                        covariates = X,
                         incidence_matrix =incidence_matrix,
-                        max.steps=15, family=FAMILY, mu0=NULL, scale.param=NULL,
+                        max.steps=30, family=FAMILY, mu0=NULL, scale.param=NULL,
                         lambda = lambda, lambda.selection.criterion = 'grid', DOF.evaluation = 'exact', lambda.selection.lossfunction = 'GCV')
 plot(log10(lambda), output_CPP$optimization$GCV_vector)
+lambda_opt <- output_CPP$optimization$lambda_position
+plot(FEM(output_CPP$fit.FEM$coeff[,lambda_opt], FEMbasis))
+plot(FEM(sol_exact, FEMbasis))
+abs(output_CPP$solution$beta[lambda_opt] - beta_)
+range(output_CPP$fit.FEM$coeff[,lambda_opt])
 
 Mass = CPP_get.FEM.Mass.Matrix(FEMbasis = FEMbasis)
 M = 30
 rmse = matrix(0, nrow=M, ncol=1)
 L2.error = matrix(0, nrow=M, ncol=1)
+rmse.beta = matrix(0, nrow=M, ncol=1)
 nnodes = nrow(mesh$nodes)
 points_ = refine.mesh.1.5D(mesh, delta= delta/8)$nodes
 npoints = nrow(points_)
+set.seed(NULL)
+set.seed(314156)
 for(i in 1:M){
-  mu<-inv.link(param)
-  range(mu)
+  
   response <- rpois(nregion, lambda = mu)
   
   output_CPP<- smooth.FEM(observations = as.numeric(response), 
-                          FEMbasis =FEMbasis,# covariates = desmat,
+                          FEMbasis =FEMbasis,
+                          covariates = X,
                           incidence_matrix =incidence_matrix,
-                          max.steps=15, family=FAMILY, mu0=NULL, scale.param=NULL,
+                          max.steps=30, family=FAMILY,
                           lambda = lambda, lambda.selection.criterion = 'grid', 
                           DOF.evaluation = 'exact', lambda.selection.lossfunction = 'GCV')
   lambda_opt = output_CPP$optimization$lambda_position
-  rmse[i] = sqrt( 1/npoints * sum(( eval.FEM(FEM(sol_exact,FEMbasis), points_) - 
-                                    eval.FEM(FEM(output_CPP$fit.FEM$coeff[,lambda_opt], FEMbasis), points_) )^2 ) )
+  rmse[i] = sqrt( mean((eval.FEM(FEM(sol_exact,FEMbasis), points_) - 
+                        eval.FEM(FEM(output_CPP$fit.FEM$coeff[,lambda_opt], FEMbasis), points_))^2))
+  rmse.beta[i] = 1/M * (output_CPP$solution$beta-beta_)^2
   L2.error[i] = sqrt( sum((Mass%*%(sol_exact - output_CPP$fit.FEM$coeff)^2 ) ) )
   
 }
-boxplot(rmse, main="RMSE")
+boxplot(rmse, main="f")
+boxplot(rmse.beta, main="Beta")
 boxplot(L2.error, main="L2 error")
 
