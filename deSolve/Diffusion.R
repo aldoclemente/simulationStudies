@@ -30,8 +30,11 @@ for(i in 1:length(N)){
   x.grid    <- setup.grid.1D(x.up = 0, x.down = 1, N = N[i])
   y.grid    <- setup.grid.1D(x.up = 0, x.down = 1, N = N[i])
   grid2D    <- setup.grid.2D(x.grid, y.grid)
-
-  h[i] = 1/N[i]^2
+  
+  #nodes <- expand.grid(x=grid2D$x.int, y = grid2D$y.int)
+  #mesh <- create.mesh.2D(nodes =nodes)
+  
+  h[i] = max(grid2D$dx, grid2D$dy)
 
   D.grid    <- setup.prop.2D(value = Dx, y.value = Dy, grid = grid2D)
   v.grid    <- setup.prop.2D(value = 0, grid = grid2D)
@@ -90,12 +93,17 @@ for(i in 1:length(N)){
 q = log2(errors.l2[1:(length(N)-1)]/errors.l2[2:length(N)])
 cat("order = ", q, "\n")
 
-par(mfrow=c(1,1))
+imgdir_ = "imgs/"
+if(!dir.exists(imgdir_))
+    dir.create(imgdir_)
+    
+pdf(paste(imgdir_,"diffusion_rates_order_1_deSolve.pdf",sep=""))
 plot(log2(h), log2(errors.l2), col="red", type="b", pch =16, lwd = 3, lty = 2, cex = 2,
-     ylim = c(min(log2(h^2), log2(errors.l2)), max(log2(h), log2(errors.l2))+2),
-     xlab = TeX("$h$"), ylab="", cex.lab=1.25)
+        ylim = c(min(log2(h^2), log2(errors.l2)), max(log2(h), log2(errors.l2))+2),
+        xlab = TeX("$h$"), ylab="", cex.lab=1.25)
 lines(log2(h), log2(h^2), col = "black", type = "b", pch = 16, lwd = 3, lty =2, cex = 2 )
 legend("topleft", legend=c(TeX("$\\| u - u_{ex} \\|_{2}$"), TeX("$h^2$")), 
-       col=c("red", "black"), 
-       lty = 1.5, 
-       cex=0.75)
+        col=c("red", "black"), 
+        lty = 2, 
+        cex=1.25)
+dev.off()

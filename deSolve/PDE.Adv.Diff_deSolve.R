@@ -10,7 +10,7 @@ rmse <- function(x,y){return(sqrt(mean( (x-y)^2)))}
 W_ <- 1.
 R_ <- 1.
 H_ <- 1.
-beta_ <- 1.#2e2
+beta_ <- 2e2
 
 alpha_ <- H_ * beta_ / R_
 gamma_ <- pi * W_ / R_  
@@ -28,7 +28,7 @@ forcing <- function(points){
   return(gamma_ * sin(pi * points[,2])) 
 }
 
-N = c(5,10,20,40,50) # int. nodes N[i]^2
+N = c(5,10,20,40) #,50) # int. nodes N[i]^2
 
 Dy    <- Dx <- -1.   # diffusion coeff, X- and Y-direction
 errors.l2 <- rep(0, times = length(N))
@@ -39,10 +39,10 @@ x.grid    <- setup.grid.1D(x.up = 0, x.down = 1, N = N[i])
 y.grid    <- setup.grid.1D(x.up = 0, x.down = 1, N = N[i])
 grid2D    <- setup.grid.2D(x.grid, y.grid)
 
-h[i] = 1/N[i]^2
+h[i] = max(grid2D$dx, grid2D$dy)
 
 D.grid    <- setup.prop.2D(value = Dx, y.value = Dy, grid = grid2D)
-v.grid    <- setup.prop.2D(value = -alpha_, y.value=0., grid = grid2D)
+v.grid    <- setup.prop.2D(value = +alpha_, y.value=0., grid = grid2D) # on the x direction "minus alpha". the "minus"is embedded into the model...
 A.grid    <- setup.prop.2D(value = 1, grid = grid2D)
 VF.grid   <- setup.prop.2D(value = 1, grid = grid2D)
 
@@ -98,18 +98,31 @@ errors.l2[i] = rmse(Y$y, as.vector(y.ex))
 q = log2(errors.l2[1:(length(N)-1)]/errors.l2[2:length(N)])
 cat("order = ", q, "\n")
 
-par(mfrow=c(1,1))
+imgdir_ = "imgs/"
+if(!dir.exists(imgdir_))
+    dir.create(imgdir_)
+if(beta_ == 2e2) 
+    title_ = "adv_dominated_diff_rates_order_1_deSolve.pdf"
+else 
+    title_ = "adv_diff_rates_order_1_deSolve.pdf"    
+     
+pdf(paste(imgdir_,title_,sep=""))
 plot(log2(h), log2(errors.l2), col="red", type="b", pch =16, lwd = 3, lty = 2, cex = 2,
-     ylim = c(min(log2(h^2), log2(errors.l2)), max(log2(h), log2(errors.l2))+2),
-     xlab = TeX("$h$"), ylab="", cex.lab=1.25)
-lines(log2(h), log2(h^2), col = "black", type = "b", pch = 16, lwd = 3, lty =2, cex = 2 )
-legend("topleft", legend=c(TeX("$\\| u - u_{ex} \\|_{2}$"), TeX("$h^2$")), 
-       col=c("red", "black"), 
-       lty = 1.5, 
-       cex=0.75)
+        ylim = c(min(log2(h), log2(errors.l2)), max(log2(h), log2(errors.l2))+2),
+        xlab = TeX("$h$"), ylab="", cex.lab=1.25)
+lines(log2(h), log2(h), col = "black", type = "b", pch = 16, lwd = 3, lty =2, cex = 2 )
+legend("topleft", legend=c(TeX("$\\| u - u_{ex} \\|_{2}$"), TeX("$h$")), 
+        col=c("red", "black"), 
+        lty = 2, 
+        cex=1.25)
+dev.off()
 
-
-microbenchmark("solution" = {Y <- steady.2D(y=y$y,
-                                            dimens = c(N[i],N[i]), 
-                                            time = 0, 
-                                            func = Adv.Diff, parms=NULL, lrw=1e8) })
+pdf(paste(imgdir_, "advection_dominated.pdf",sep=""))
+par(mfrow=c(1,2))
+image(y.ex, ask = FALSE, main = "exact")
+image(y.hat, ask = FALSE, main = "estimate")
+dev.off()
+#microbenchmark("solution" = {Y <- steady.2D(y=y$y,
+#                                            dimens = c(N[i],N[i]), 
+#                                            time = 0, 
+#                                            func = Adv.Diff, parms=NULL, lrw=1e8) })
