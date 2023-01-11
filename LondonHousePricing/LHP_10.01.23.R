@@ -100,7 +100,7 @@ for(i in 1:K){
   X = cbind( train_data$FLOORSZ, 
              train_data$PROF,   #, 
              train_data$BATH2) #, 
-  lambda = seq(from=3,to=10,length.out=20) 
+  lambda = 10^seq(from=-3,to=-1.5,length.out=20) 
   output_CPP = smooth.FEM(observations = train_data$PURCHASE, 
                           locations = train_data@coords,
                           FEMbasis = FEMbasis,
