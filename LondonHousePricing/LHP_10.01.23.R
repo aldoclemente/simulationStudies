@@ -135,12 +135,12 @@ if(!dir.exists("data/")) {
 
 date_ = gsub(":","_",gsub(" ","-",Sys.time()))
 folder_ = paste("data/",date_, "/", sep="")
-if(!dir.exists(folder)) {
-  dir.create(folder)
+if(!dir.exists(folder_)) {
+  dir.create(folder_)
 }
 
-filename = paste(folder, "LHP", ".RData",sep="")
-imgfile = paste(folder, "LHP", ".pdf",sep="")
+filename = paste(folder_, "LHP", ".RData",sep="")
+imgfile = paste(folder_, "LHP", ".pdf",sep="")
 save(tot.time, RMSE.prediction, betas,
      mean.field.estimate, field.estimate, imgfile,
      FEMbasis, file=filename)
