@@ -1,5 +1,6 @@
 rm(list=ls())
 library(viridis)
+library(colorspace)
 source("../utils.R")
 source("LNH_utils.R")
 library(GWmodel)
@@ -132,9 +133,16 @@ if(!dir.exists("data/")) {
   dir.create("data/")
 }
 
-filename = paste("data/LondonHousePrice-", gsub(":","_",gsub(" ","-",Sys.time())), ".RData",sep="")
+date_ = gsub(":","_",gsub(" ","-",Sys.time()))
+folder_ = paste("data/",date_, "/", sep="")
+if(!dir.exists(folder)) {
+  dir.create(folder)
+}
+
+filename = paste(folder, "LHP", ".RData",sep="")
+imgfile = paste(folder, "LHP", ".pdf",sep="")
 save(tot.time, RMSE.prediction, betas,
-     mean.field.estimate, field.estimate,
+     mean.field.estimate, field.estimate, imgfile,
      FEMbasis, file=filename)
 
 
@@ -145,15 +153,15 @@ Field.plot <- R_plot_graph.ggplot2.2(FEM(mean.field.estimate,FEMbasis),
                                      line.size = line.size,
                                      #          color.min = min.col,
                                      #         color.max = max.col,
-                                     title = bquote(hat(f)), #expression(hat(f) ~ paste("(n=",n_data[1],")",sep="")),
-                                     return.ggplot.object = T,
+                                     title = bquote(hat(f)), #expression(hat(f) ~ paste("(n=",n_data[1],")",sep=""))
                                      palette=p,
                                      legend.pos = "right")
 
 rmse.plot <- boxplot_RMSE(rmse.SR.PDE = RMSE.prediction$RMSE.fdaPDE,
                           rmse.GWR =  RMSE.prediction$RMSE.GWR.ND,
                           title.size = 26, title="CV-RMSE")
-pdf("img/LHP.pdf")
+
+pdf(imgfile)
 rmse.plot
 Field.plot
 for(i in 1:K){
@@ -162,7 +170,7 @@ for(i in 1:K){
                                 #          color.min = min.col,
                                 #         color.max = max.col,
                                 title = bquote(hat(f)), #expression(hat(f) ~ paste("(n=",n_data[1],")",sep="")),
-                                return.ggplot.object = T,
+                                #return.ggplot.object = T,
                                 palette=p,
                                 legend.pos = "right")
   )
