@@ -2,6 +2,7 @@ rm(list=ls())
 library(viridis)
 source("../utils.R")
 source("LNH_utils.R")
+library(GWmodel)
 data(LNNT)
 data(LNHP)
 
