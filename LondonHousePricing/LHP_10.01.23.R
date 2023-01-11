@@ -1,4 +1,5 @@
 rm(list=ls())
+library(viridis)
 source("../utils.R")
 source("LNH_utils.R")
 data(LNNT)
@@ -137,7 +138,6 @@ save(tot.time, RMSE.prediction, betas,
 
 
 source("../Auxiliary/R_plot_graph.ggplot2.R")
-library(viridis)
 p = viridis
 line.size=0.125
 Field.plot <- R_plot_graph.ggplot2.2(FEM(mean.field.estimate,FEMbasis),
@@ -152,7 +152,7 @@ Field.plot <- R_plot_graph.ggplot2.2(FEM(mean.field.estimate,FEMbasis),
 rmse.plot <- boxplot_RMSE(rmse.SR.PDE = RMSE.prediction$RMSE.fdaPDE,
                           rmse.GWR =  RMSE.prediction$RMSE.GWR.ND,
                           title.size = 26, title="CV-RMSE")
-pdf("img/LHP_1e3_images.pdf")
+pdf("img/LHP.pdf")
 rmse.plot
 Field.plot
 for(i in 1:K){
