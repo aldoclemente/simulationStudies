@@ -419,7 +419,7 @@ aux.1 = function(x,y){
 }  
 f = function(x,y){
   
-  res = (aux.1(x,y) + aux.3(x,y) + aux.4(x,y))
+  res = (aux.1(x,y) + aux.3(x,y) + aux.4(x,y)) + 1.
   return(res)
 }
 
@@ -445,9 +445,9 @@ for(i in 1:nregion){
 }
 
 # samoling response
-X = matrix(rbeta(nregion,1,2), nrow=nregion, ncol=1)
-beta_ = 1.
-param= beta_*X + I_region #/lens_region # + desmat%*%betas_truth 
+#X = matrix(rbeta(nregion,1,2), nrow=nregion, ncol=1)
+#beta_ = 1.
+param= I_region  #/lens_region # + desmat%*%betas_truth 
 ran=range(param) 
 
 mu<-inv.link(param)
@@ -458,9 +458,9 @@ range(response)
 
 #lambda = 10^seq(-4.,0,length.out = 250)
 
-lambda = 10^seq(-2.,2,length.out = 1000)
+lambda = 10^seq(-2.,2,length.out = 500)
 output_CPP<- smooth.FEM(observations = as.numeric(response), FEMbasis =FEMbasis, 
-                        covariates = X,
+                        covariates = NULL,
                         incidence_matrix =incidence_matrix,
                         max.steps=30, family=FAMILY, mu0=NULL, scale.param=NULL,
                         lambda = lambda, lambda.selection.criterion = 'grid', DOF.evaluation = 'exact', lambda.selection.lossfunction = 'GCV')
@@ -468,12 +468,16 @@ plot(log10(lambda), output_CPP$optimization$GCV_vector)
 lambda_opt <- output_CPP$optimization$lambda_position
 plot(FEM(output_CPP$fit.FEM$coeff[,lambda_opt], FEMbasis))
 plot(FEM(sol_exact, FEMbasis))
-abs(output_CPP$solution$beta[lambda_opt] - beta_)
 range(output_CPP$fit.FEM$coeff[,lambda_opt])
+
+locations = refine.by.splitting.mesh.1.5D(mesh)$nodes
+prediction = inv.link( eval.FEM( FEM(output_CPP$fit.FEM$coeff[,lambda_opt], FEMbasis), locations = locations))
+cbind(prediction, inv.link(f(locations[,1],locations[,2])) )
 
 Mass = CPP_get.FEM.Mass.Matrix(FEMbasis = FEMbasis)
 M = 30
 rmse = matrix(0, nrow=M, ncol=1)
+rmse.2 = matrix(0,nrow=M, ncol=1)
 L2.error = matrix(0, nrow=M, ncol=1)
 rmse.beta = matrix(0, nrow=M, ncol=1)
 nnodes = nrow(mesh$nodes)
@@ -491,10 +495,13 @@ for(i in 1:M){
                           incidence_matrix =incidence_matrix,
                           max.steps=30, family=FAMILY,
                           lambda = lambda, lambda.selection.criterion = 'grid', 
-                          DOF.evaluation = 'exact', lambda.selection.lossfunction = 'GCV')
+                          DOF.evaluation = 'exact', 
+                          .selection.lossfunction = 'GCV')
   lambda_opt = output_CPP$optimization$lambda_position
   rmse[i] = sqrt( mean((eval.FEM(FEM(sol_exact,FEMbasis), points_) - 
                         eval.FEM(FEM(output_CPP$fit.FEM$coeff[,lambda_opt], FEMbasis), points_))^2))
+  
+  rmse.2[i] = sqrt(mean( ))
   rmse.beta[i] = 1/M * (output_CPP$solution$beta-beta_)^2
   L2.error[i] = sqrt( sum((Mass%*%(sol_exact - output_CPP$fit.FEM$coeff)^2 ) ) )
   

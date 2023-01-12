@@ -1,3 +1,4 @@
+rm(list=ls())
 library(fdaPDE)
 library(spatstat)
 setwd("SR-chicago-case-study/")
@@ -30,10 +31,11 @@ chicago.norm = spatstat.linnet::lpp(X= ppp(x.norm, y=y.norm,
 
 DATA = chicago.norm # chicago
 
+{
 x11()
 plot(mesh, pch=".")
 points(DATA$data$x, DATA$data$y, col = "red", pch=16, cex=1.5)
-
+}
 ### FAMILY - poisson ###
 delta = 0.25
 
@@ -42,7 +44,7 @@ FEMbasis = create.FEM.basis(mesh)
 new_to_old  = refine1D(mesh$nodes, mesh$edges, delta)$new_to_old
 
 #setting regions 
-nregion = 10 #8 #6 #10
+nregion = 30 #8 #6 #10 
 nedges = nrow(mesh$edges)
 ndata = length(DATA$data$x)
 # lines == true edges of the network / edges == edges of the discretized network
@@ -50,10 +52,7 @@ data_ = cbind(DATA$data$x, DATA$data$y)
 result_ <- kmeans(x=data_, centers=nregion, iter.max = 100)
 centroids_ = projection.points.1.5D(mesh, locations= result_$centers)
 
-#idx = 149
-#centroids_ = rbind(centroids_, c(mesh$nodes[idx,]))
-#nregion = nregion + 1
-
+{
 x11()
 plot(mesh, pch=".")
 points(data_, col="red", pch=16, cex=2)
@@ -61,6 +60,7 @@ points(result_$centers, col="blue", pch = 16, cex=2)
 points(centroids_, col="green4", pch=16, cex=2)
 legend("topright", legend=c("data", "2D", "1.5D"), 
         col=c("red", "blue", "green4"), pch = 16, cex=1.25 )
+}
 
 lines_to_region <- set_region(centroids_, mesh=mesh, LN = DATA)
 
@@ -77,9 +77,10 @@ for( i in DATA$data$seg){
 }
 range(response)
 
+{
 x11()
 plot_region(lines_to_region, response, LN=DATA,mesh=mesh)
-
+}
 lambda = 10^seq(from=0,to=8,length.out=500)
 
 output_CPP <- smooth.FEM(observations = response,
@@ -94,20 +95,22 @@ output_CPP <- smooth.FEM(observations = response,
 
 lambda_opt <- output_CPP$optimization$lambda_position
 # sqrt(GCV_ * (sum(!is.na(observations)) - dof)/sum(!is.na(observations)))
+{
 x11()
 plot(log10(lambda), output_CPP$optimization$GCV_vector, xlab="log10(lambda)", ylab="GCV")
+}
 
 Mass = fdaPDE::CPP_get.FEM.Mass.Matrix(FEMbasis)
-L <- sum( Mass %*% rep(1,times=FEMbasis$nbasis))
-density.FEM = FEM(coeff= output_CPP$fit.FEM$coeff[,lambda_opt] / ndata / L, FEMbasis= FEMbasis )
+L <- sum( Mass %*% output_CPP$fit.FEM$coeff[,lambda_opt]/ndata)
+density.FEM = FEM(coeff= output_CPP$fit.FEM$coeff[,lambda_opt] / ndata / L , FEMbasis= FEMbasis )
 
 plot(FEM(output_CPP$fit.FEM$coeff[,lambda_opt],FEMbasis = FEMbasis))
 plot(density.FEM) 
-range(density.FEM$coeff)
+diff(range(density.FEM$coeff))
+
 range(output_CPP$fit.FEM$coeff[,lambda_opt]) 
 
-I_vec = Mass%*%density.FEM$coeff
-sum(I_vec) # mmm 
+sum(Mass%*%density.FEM$coeff)
 
 lambda_DE = 10^seq(from=-3.5, to=-2.5,length.out = 20)
 DE_PDE = fdaPDE::DE.FEM(data = cbind(DATA$data$x, DATA$data$y), FEMbasis = FEMbasis,
@@ -120,7 +123,7 @@ plot(log10(lambda_DE), DE_PDE$CV_err, xlab="log10(lambda)", ylab="CV")
 sum(Mass%*% exp(DE_PDE$g))
 plot(FEM(exp(DE_PDE$g), FEMbasis))
 range(exp(DE_PDE$g))
-range(output_CPP$fit.FEM$coeff[,lambda_opt]) 
+range(density.FEM$coeff) 
 
 
 ################################################################################
