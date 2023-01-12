@@ -48,15 +48,18 @@ plot(spat.stat.linnet)
 points(locs_[,1], locs_[,2], pch=16, col="red3")
 points(locs[,1], locs[,2], pch=16, col="blue")
 
-n_cov <- ncol(dataFrame) - 10 # PURCHASE----X-Y-DATA.IDX
+n_cov <- ncol(dataFrame) - 4 # PURCHASE----X-Y-DATA.IDX
 
 observations = dataFrame$PURCHASE
 locations = cbind(LPP$data$x, LPP$data$y)
 X = as.matrix(dataFrame@data[1:nrow(dataFrame), 2:(n_cov+1)])
 
-inference.data.object <- inferenceDataObjectBuilder(test = c("sim", "sim"), 
-                                               type = c("w", "s"), dim = 2,
-                                               n_cov = n_cov)
+inference.data.object <- inferenceDataObjectBuilder(test = "oat", 
+                                                    interval = "oat", 
+                                                    component = "parametric",
+                                                    type = "w",  
+                                                    dim = 2,
+                                                    n_cov = n_cov)
 
 lambda = 10^seq(from=-3,to=-1.5,length.out=20) 
 # NOPE
@@ -65,9 +68,9 @@ output_CPP = smooth.FEM(observations = observations,
                         FEMbasis = FEMbasis,
                         covariates = X,
                         lambda = 1.,
-                        lambda.selection.criterion = "grid",
+                        lambda.selection.criterion = "newton_fd",
                         lambda.selection.lossfunction = "GCV",
-                        DOF.evaluation = "stochastic",
+                        DOF.evaluation = "exact",
                         inference.data.object = inference.data.object)
 
 plot(log10(lambda), output_CPP$optimization$GCV_vector)
