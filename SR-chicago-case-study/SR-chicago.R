@@ -221,3 +221,218 @@ save(CV_errors, date_, folder.name,
      file = paste(folder.name, "CV_error.RData", sep=""))
 
 boxplot(CV_errors, main = "CV error")
+
+
+response = rep(0, times= nregion)
+for( i in DATA$data$seg){
+  response[lines_to_region[i]] = response[lines_to_region[i]] + 1
+}
+range(response)
+GSR_PDE <- smooth.FEM(observations = response,
+                         covariates = NULL,
+                         FEMbasis = FEMbasis,
+                         incidence_matrix = incidence_matrix,
+                         lambda = lambda_GSR,
+                         lambda.selection.criterion = "grid",
+                         lambda.selection.lossfunction = "GCV",
+                         DOF.evaluation = "exact",
+                         family="poisson")
+
+lambda_opt <- GSR_PDE$optimization$lambda_position
+
+coeff_ <- exp(GSR_PDE$solution$f[,lambda_opt])
+coeff_ <- coeff_ / sum( Mass%*% coeff_ )
+GSR_PDE.FEM = FEM(coeff_, FEMbasis)
+
+DE_PDE = fdaPDE::DE.FEM(data = cbind(DATA$data$x, DATA$data$y), FEMbasis = FEMbasis,
+                        lambda = lambda_DE,
+                        preprocess_method ="RightCV",
+                        nfolds = 10)
+DE_PDE.FEM = FEM(coeff= exp(DE_PDE$g), FEMbasis)
+
+{
+library(ggplot2)
+library(viridis)
+library(colorspace)
+library(grid)
+library(gridExtra)
+source("../Auxiliary/R_plot_graph.ggplot2.R")
+
+boxplot_CV_error <-function(CV_errors,
+                            methods,
+                            methods.names,
+                        title.size=20,
+                        begin=0.95, #color
+                        end=0.25,   #color
+                        width =0.75,
+                        title="CV error")
+{
+  
+  METHODS = rep(methods.names[methods], each=nrow(CV_errors))
+  RMSE =  as.vector(CV_errors)
+  dataFrame = data.frame(RMSE=RMSE, METHODS = METHODS)
+  
+  MyTheme <- theme(
+    axis.text = element_text(size=title.size-5),
+    axis.title = element_text(size=title.size),
+    title = element_text(size=title.size),
+    plot.title = element_text(hjust = 0.5),
+    legend.text = element_text(size=title.size-5),
+    legend.key.size = unit(1,"cm"),
+    legend.key.height = unit(1,"cm"),
+    legend.title = element_blank(),
+    legend.background = element_rect(fill="white", color="black",
+                                     size=c(1,0.5))
+  )
+  
+  border_col = darken(viridis(ncol(CV_errors), begin=end,end=begin), amount=0.25)
+  fill_col = viridis(ncol(CV_errors), begin=end, end=begin)
+  
+  BORDER = c()
+  FILL = c()
+  for(i in 1:length(methods)){
+    if(methods[i]){ 
+      FILL = append(FILL, fill_col[i])
+      BORDER = append(BORDER, border_col[i])
+    }
+  }
+  
+  dataFrame$METHODS = factor(dataFrame$METHODS, 
+                             levels=methods.names) 
+  
+  
+  p<-ggplot(dataFrame)+
+    geom_boxplot(aes(x=METHODS,
+                     y=RMSE, group=METHODS,
+                     fill=METHODS,
+                     color=METHODS), width=width)+
+    scale_x_discrete(limits=methods.names[methods])+
+    labs(x="", y="",
+         title=title)+
+    scale_fill_viridis(begin = end,
+                       end = begin,
+                       option = "viridis", discrete=T) + #ok
+    scale_color_manual(values=border_col) +
+    scale_y_continuous(labels = function(x) format(x, scientific = TRUE))+
+    MyTheme + 
+    theme(#plot.title=element_blank(),
+      axis.ticks.x = element_blank(),
+      legend.position = "none")
+  return(p)  
+}
+
+}
+
+folder.imgs = paste(folder.name,"img/",sep="")
+if(!dir.exists(folder.imgs)) {
+  dir.create(folder.imgs)
+}
+
+{
+pdf(paste(folder.imgs,"CV_error.pdf",sep=""))
+methods = c(T,T,F,F)
+methods.names = c("DE-PDE", "GSR-PDE")
+boxplot_CV_error(CV_errors = CV_errors, 
+                 methods = methods,
+                 methods.names = methods.names)
+dev.off()
+}
+
+{
+pdf(paste(folder.imgs, "estimates.pdf",sep=""))
+estimates = list()
+estimates[[1]] = DE_PDE.FEM
+estimates[[2]] = GSR_PDE.FEM
+
+PLOTS = list()
+for(i in 1:length(estimates))
+{
+    PLOTS[[i]] = R_plot_graph.ggplot2.2( estimates[[i]], 
+                                          title = methods.names[i],
+                                          palette=viridis)
+    
+}
+
+for(i in 1:length(estimates)){
+  print(PLOTS[[i]])
+}
+
+PLOTS = list()
+for(i in 1:length(estimates)){
+    PLOTS[[i]] = R_plot_graph.ggplot2.2( estimates[[i]], # FEM object
+                                          title = methods.names[[i]],
+                                          palette=magma)
+    
+}
+for(i in 1:length(estimates)){
+  print(PLOTS[[i]])
+}
+
+
+PLOTS = list()
+for(i in 1:length(estimates)){
+    PLOTS[[i]] = R_plot_graph.ggplot2.2( estimates[[i]], # FEM object
+                                          title = methods.names[[i]],
+                                          palette=jet.col)
+    
+}
+for(i in 1:length(estimates)){
+  print(PLOTS[[i]])
+}
+
+dev.off()
+}
+
+# ref mesh 
+estimates = list()
+estimates[[1]] = DE_PDE.FEM
+estimates[[2]] = GSR_PDE.FEM
+
+mesh.ref = refine.mesh.1.5D(DE_PDE.FEM$FEMbasis$mesh, delta = 0.125)
+FEMbasis.ref = create.FEM.basis(mesh.ref)
+locs = mesh.ref$nodes
+
+for(i in 1:length(estimates))
+  estimates[[i]] = FEM(eval.FEM(estimates[[i]], locations = locs),
+                       FEMbasis.ref)
+
+{
+pdf(paste(folder.imgs, "estimates_ref.pdf",sep=""))
+PLOTS = list()
+for(i in 1:length(estimates))
+{
+    PLOTS[[i]] = R_plot_graph.ggplot2.2( estimates[[i]], 
+                                          title = methods.names[i],
+                                          palette=viridis)
+    
+}
+
+for(i in 1:length(estimates)){
+  print(PLOTS[[i]])
+}
+
+PLOTS = list()
+for(i in 1:length(estimates)){
+    PLOTS[[i]] = R_plot_graph.ggplot2.2( estimates[[i]], # FEM object
+                                          title = methods.names[[i]],
+                                          palette=magma)
+    
+}
+for(i in 1:length(estimates)){
+  print(PLOTS[[i]])
+}
+
+
+PLOTS = list()
+for(i in 1:length(estimates)){
+    PLOTS[[i]] = R_plot_graph.ggplot2.2( estimates[[i]], # FEM object
+                                          title = methods.names[[i]],
+                                          palette=jet.col)
+    
+}
+for(i in 1:length(estimates)){
+  print(PLOTS[[i]])
+}
+
+dev.off()
+}
