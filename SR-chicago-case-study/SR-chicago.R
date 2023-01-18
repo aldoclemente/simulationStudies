@@ -5,6 +5,7 @@ setwd("SR-chicago-case-study/")
 
 source("refine1D.R")
 source("../utils.R")
+source("../DensityEstimation/utils.R")
 data("chicago")
 
 vertices = cbind(chicago$domain$vertices$x, chicago$domain$vertices$y)
@@ -41,16 +42,22 @@ delta = 0.25
 
 mesh = refine.mesh.1.5D(mesh, delta=delta)
 FEMbasis = create.FEM.basis(mesh)
-new_to_old  = refine1D(mesh$nodes, mesh$edges, delta)$new_to_old
+#new_to_old  = refine1D(mesh$nodes, mesh$edges, delta)$new_to_old
 
 #setting regions 
-nregion = 30 #8 #6 #10 
+nnodes = nrow(mesh$nodes)
+nregion = 12 #8 #6 #10 
 nedges = nrow(mesh$edges)
 ndata = length(DATA$data$x)
+
+PP = runiflpp(n=nregion/2, L = chicago.norm$domain) 
+centroids_ = cbind(PP$data$x, PP$data$y)
+centroids_ = projection.points.1.5D(mesh=mesh, location=centroids_)
+
 # lines == true edges of the network / edges == edges of the discretized network
 data_ = cbind(DATA$data$x, DATA$data$y)
 result_ <- kmeans(x=data_, centers=nregion, iter.max = 100)
-centroids_ = projection.points.1.5D(mesh, locations= result_$centers)
+centroids_ = rbind( centroids_, projection.points.1.5D(mesh, locations= result_$centers) )
 
 {
 x11()
@@ -64,11 +71,33 @@ legend("topright", legend=c("data", "2D", "1.5D"),
 
 lines_to_region <- set_region(centroids_, mesh=mesh, LN = DATA)
 
+nregion = nrow(centroids_)
+
 incidence_matrix = matrix(0, nrow=nregion, ncol=nedges)
 
-for(i in 1:nrow(new_to_old)){
-  incidence_matrix[ lines_to_region[new_to_old[i]],i] = 1
+# for(i in 1:nrow(new_to_old)){
+#   incidence_matrix[ lines_to_region[new_to_old[i]],i] = 1
+# }
+
+for(i in 1:nedges){
+   incidence_matrix[ lines_to_region[i],i] = 1
 }
+
+mask_= matrix(0, nrow=nregion, ncol=1)
+for( i in 1:nregion){
+  if( !sum(incidence_matrix[i,])){
+    mask_[i] = 1
+    print(mask_[i])
+  }
+}
+
+if( sum(mask_)){
+  incidence_matrix = incidence_matrix[-mask_,]
+  nregion = nregion - sum(mask_)
+  centroids_ = centroids_[-mask_,]
+  lines_to_region <- set_region(centroids_, mesh=mesh, LN = PP)
+}
+
 
 response = rep(0, times= nregion)
 
@@ -81,36 +110,30 @@ range(response)
 x11()
 plot_region(lines_to_region, response, LN=DATA,mesh=mesh)
 }
-lambda = 10^seq(from=0,to=8,length.out=500)
+lambda_GSR = 10^seq(from=-2,to=1,length.out=250)
 
-output_CPP <- smooth.FEM(observations = response,
+GSR_PDE <- smooth.FEM(observations = response,
                          covariates = NULL,
                          FEMbasis = FEMbasis,
                          incidence_matrix = incidence_matrix,
-                         lambda = lambda,
+                         lambda = lambda_GSR,
                          lambda.selection.criterion = "grid",
                          lambda.selection.lossfunction = "GCV",
                          DOF.evaluation = "exact",
                          family="poisson")
 
-lambda_opt <- output_CPP$optimization$lambda_position
+lambda_opt <- GSR_PDE$optimization$lambda_position
 # sqrt(GCV_ * (sum(!is.na(observations)) - dof)/sum(!is.na(observations)))
 {
 x11()
-plot(log10(lambda), output_CPP$optimization$GCV_vector, xlab="log10(lambda)", ylab="GCV")
+plot(log10(lambda), GSR_PDE$optimization$GCV_vector, xlab="log10(lambda)", ylab="GCV")
 }
 
 Mass = fdaPDE::CPP_get.FEM.Mass.Matrix(FEMbasis)
-L <- sum( Mass %*% output_CPP$fit.FEM$coeff[,lambda_opt]/ndata)
-density.FEM = FEM(coeff= output_CPP$fit.FEM$coeff[,lambda_opt] / ndata / L , FEMbasis= FEMbasis )
-
-plot(FEM(output_CPP$fit.FEM$coeff[,lambda_opt],FEMbasis = FEMbasis))
-plot(density.FEM) 
-diff(range(density.FEM$coeff))
-
-range(output_CPP$fit.FEM$coeff[,lambda_opt]) 
-
-sum(Mass%*%density.FEM$coeff)
+coeff_ <- exp(GSR_PDE$solution$f[,lambda_opt])
+coeff_ <- coeff_ / sum( Mass%*% coeff_ )
+plot(FEM(coeff_, FEMbasis))
+range(coeff_)
 
 lambda_DE = 10^seq(from=-3.5, to=-2.5,length.out = 20)
 DE_PDE = fdaPDE::DE.FEM(data = cbind(DATA$data$x, DATA$data$y), FEMbasis = FEMbasis,
@@ -123,14 +146,10 @@ plot(log10(lambda_DE), DE_PDE$CV_err, xlab="log10(lambda)", ylab="CV")
 sum(Mass%*% exp(DE_PDE$g))
 plot(FEM(exp(DE_PDE$g), FEMbasis))
 range(exp(DE_PDE$g))
-range(density.FEM$coeff) 
 
+sum( Mass%*% (exp(DE_PDE$g) - coeff_)^2 )
 
 ################################################################################
-
-source("../DensityEstimation/utils.R")
-
-Mass = CPP_get.FEM.Mass.Matrix(FEMbasis)
 K = 10
 
 dataList = set_Kfold_data(DATA$data, seed = 0)
@@ -152,7 +171,7 @@ if(!dir.exists(folder.name)) {
 }
 
 
-CV_errors = matrix(0, nrow = K, ncol = 1)
+CV_errors = matrix(0, nrow = K, ncol = 2)
 
 for(i in 1:K){
   
@@ -161,24 +180,42 @@ for(i in 1:K){
   test_data = tmp$test_data
   
   # DE-PDE 
-  lambda = 10^seq(from=0,to=4,length.out=150)
-  output_CPP = smooth.FEM(observations = response,
-                           covariates = NULL,
-                           FEMbasis = FEMbasis,
-                           incidence_matrix = incidence_matrix,
-                           lambda = lambda,
-                           lambda.selection.criterion = "grid",
-                           lambda.selection.lossfunction = "GCV",
-                           DOF.evaluation = "exact",
-                           family="poisson")
-  lambda_opt <- output_CPP$optimization$lambda_position
-  density.FEM = FEM(coeff= output_CPP$fit.FEM$coeff[,lambda_opt] / ndata, FEMbasis= FEMbasis )
+  DE_PDE = fdaPDE::DE.FEM(data = cbind(train_data$x, train_data$y), FEMbasis = FEMbasis,
+                        lambda = lambda_DE,
+                        preprocess_method ="RightCV",
+                        nfolds = 10)
+  DE_PDE.FEM = FEM(coeff= exp(DE_PDE$g), FEMbasis= FEMbasis )
   
-  CV_errors[i,1] = cv_error(FEM = density.FEM, 
+  CV_errors[i,1] = cv_error(FEM = DE_PDE.FEM, 
                             R0 = Mass, data.k = test_data)
-}
 
-date_ = gsub(":","_",gsub(" ","-",Sys.time()))
+  # GSR-PDE 
+  response = rep(0, times= nregion)
+  for(k in train_data$seg){
+    response[lines_to_region[k]] = response[lines_to_region[k]] + 1
+  }
+
+  GSR_PDE <- smooth.FEM(observations = response,
+                         covariates = NULL,
+                         FEMbasis = FEMbasis,
+                         incidence_matrix = incidence_matrix,
+                         lambda = lambda_GSR,
+                         lambda.selection.criterion = "grid",
+                         lambda.selection.lossfunction = "GCV",
+                         DOF.evaluation = "exact",
+                         family="poisson")
+
+  lambda_opt <- GSR_PDE$optimization$lambda_position
+  
+  coeff_ <- exp(GSR_PDE$solution$f[,lambda_opt])
+  coeff_ <- coeff_ / sum( Mass%*% coeff_ )
+
+  GSR_PDE.FEM = FEM(coeff_, FEMbasis) 
+  CV_errors[i,2] = cv_error(FEM = GSR_PDE.FEM, 
+                            R0 = Mass, data.k = test_data)
+
+
+}
 
 save(CV_errors, date_, folder.name,
      file = paste(folder.name, "CV_error.RData", sep=""))
