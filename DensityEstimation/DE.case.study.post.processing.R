@@ -84,12 +84,12 @@ plot_estimates <-function(estimates, # list of estimates
                           titles = c(rep("",times=length(estimates))) )
   {
   
-  max.col = -1e8
-  min.col = 1e8
-  for(i in 1:length(estimates)){
-    max.col = max(estimates[[i]]$coeff, max.col)
-    min.col = min(estimates[[i]]$coeff, min.col)
-  }
+  # max.col = -1e8
+  # min.col = 1e8
+  # for(i in 1:length(estimates)){
+  #   max.col = max(estimates[[i]]$coeff, max.col)
+  #   min.col = min(estimates[[i]]$coeff, min.col)
+  # }
   
   estimates.plot = list()
   
@@ -97,8 +97,8 @@ plot_estimates <-function(estimates, # list of estimates
     
     estimates.plot[[i]] = R_plot_graph.ggplot2.2( estimates[[i]], # FEM object
                                                  line.size = line.size,
-                                                 color.min = min.col,
-                                                 color.max = max.col,
+                                                #  color.min = min.col,
+                                                #  color.max = max.col,
                                                  title = titles[[i]],
                                                  palette=palette,
                                                  legend.pos = "right")
@@ -173,7 +173,7 @@ for(i in 1:length(estimates))
 
 
 #pdf(paste(folder.imgs,"estimates_ref.pdf",sep=""))
-pdf("estimates_ref.pdf")
+pdf(paste(folder.imgs,"estimates_ref.pdf",sep=""))
 PLOTS <- plot_estimates(estimates, 
                         palette = viridis,
                         titles = methods.names[methods],

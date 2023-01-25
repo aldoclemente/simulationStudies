@@ -288,7 +288,7 @@ as.spatstat.linnet.fdaPDE <- function(mesh){
 #' 
 #' @return SpatialLinesDf, It contains the length of each edges in the network.
 #'   
-as.fdaPDE.spatstat.linnet <- function(spatstat.linnet){
+as.fdaPDE.spatstat.linnet <- function(spat.stat.linnet){
   
   nodes = cbind(spat.stat.linnet$vertices$x, spat.stat.linnet$vertices$y)
   edges = cbind(spat.stat.linnet$from, spat.stat.linnet$to)

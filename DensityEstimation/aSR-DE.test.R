@@ -49,7 +49,7 @@ spat.stat.linnet = sett$spat.stat.linnet
 locs.test = runiflpp(1000, spat.stat.linnet)
 locs.test = cbind(locs.test$data$x, locs.test$data$y)
 # point pattern #
-if(ntest==1) n = c(250)#n = c(50, 100, 150, 250)
+if(ntest==1) n = c(50, 100, 150, 250)#n = c(50, 100, 150, 250)
 #if(ntest==2) n = c(100, 250, 500, 1000)
 set.seed(1234)
 
@@ -60,7 +60,7 @@ auxiliary_test = aux_test[[ntest]]
 
 DENSITY = linfun(auxiliary_test, spat.stat.linnet) # test 2
 
-PP = rlpp(n=n, f = DENSITY)  
+PP = rlpp(n=n[4], f = DENSITY)  
 data = cbind(PP$data$x, PP$data$y)
 result_ <- kmeans(x=data, centers=nregion, iter.max = 100)
 #centroids_ = projection.points.1.5D(mesh, locations= result_$centers)
@@ -106,14 +106,14 @@ sum(incidence_matrix)
 mask_= matrix(0, nrow=nregion, ncol=1)
 for( i in 1:nregion){
   if( !sum(incidence_matrix[i,])){
-    mask_[i] = 1
+    mask_[i] = i
     print(mask_[i])
   }
 }
 
 if( sum(mask_)){
   incidence_matrix = incidence_matrix[-mask_,]
-  nregion = nregion - sum(mask_)
+  nregion = nregion - sum(mask_!=0)
   centroids_ = centroids_[-mask_,]
   lines_to_region <- set_region(centroids_, mesh=mesh, LN = PP)
 }
@@ -134,7 +134,7 @@ true.density = DENSITY(x=mesh$nodes[,1], y=mesh$nodes[,2])
 true.density.FEM = true.density / sum( Mass %*% true.density)
 true.density = DENSITY(x=locs.test[,1], y=locs.test[,2]) / sum( Mass %*% true.density)
 
-lambda = 10^seq(from=-4, to=1,length.out = 500)
+lambda = 10^seq(from=-3, to=1,length.out = 500)
 {
 start = Sys.time()
 GSR_PDE   <- smooth.FEM(observations = response,
@@ -144,6 +144,8 @@ GSR_PDE   <- smooth.FEM(observations = response,
                          lambda.selection.criterion = "grid",
                          lambda.selection.lossfunction = "GCV",
                          DOF.evaluation = "exact",
+                         max.steps.FPIRLS = 500,
+                         threshold.FPIRLS = 1e-4,
                          family="poisson")
 cat(paste("- GSR-PDE DONE, time elapsed = ", difftime(Sys.time(),start, units = "mins")," mins \n", sep="") )
 plot(log10(lambda), GSR_PDE$optimization$GCV_vector)
@@ -205,7 +207,7 @@ if(methods[1]){
   #plot(DE_PDE$CV_err, main=paste("n = ", n[j], sep=""))
   rmse.DE_PDE[i,j] = sqrt(mean((true.density - eval.FEM(FEM(coeff=exp(DE_PDE$g),FEMbasis),
                                               locations = locs.test))^2 ))
-  DE_PDE.FEM = DE_PDE.FEM + exp(DE_PDE$g) / nsim
+  if(j==length(n)) DE_PDE.FEM = DE_PDE.FEM + exp(DE_PDE$g) / nsim
 }
 
 # GSR-PDE
@@ -223,7 +225,7 @@ if(methods[2]){
     response[lines_to_region[k]] = response[lines_to_region[k]] + 1
   }
 
-  lambda = 10^seq(from=-4, to=1,length.out = 500)
+  lambda = 10^seq(from=-3, to=1,length.out = 500)
   start = Sys.time()
   GSR_PDE   <- smooth.FEM(observations = response,
                          FEMbasis = FEMbasis,
@@ -232,6 +234,8 @@ if(methods[2]){
                          lambda.selection.criterion = "grid",
                          lambda.selection.lossfunction = "GCV",
                          DOF.evaluation = "exact",
+                         max.steps.FPIRLS = 500,
+                         threshold.FPIRLS = 1e-4,
                          family="poisson")
 cat(paste("- GSR-PDE DONE, time elapsed = ", difftime(Sys.time(),start, units = "mins")," mins \n", sep="") )
 
@@ -243,7 +247,7 @@ coeff_ <- coeff_ / sum( Mass%*% coeff_ )
 rmse.GSR_PDE[i,j] = sqrt(mean( (true.density - eval.FEM(FEM(coeff=coeff_,FEMbasis),
                                               locations = locs.test))^2 ))
 
-GSR_PDE.FEM = GSR_PDE.FEM + coeff_ / nsim
+if(j==length(n)) GSR_PDE.FEM = GSR_PDE.FEM + coeff_ / nsim
 }
   # spatstat returns the INTENSITY function. 
   # The estimation of DENSITY or INTENSITY is equivalent, if n is fixed,
@@ -257,7 +261,8 @@ GSR_PDE.FEM = GSR_PDE.FEM + coeff_ / nsim
   cat(paste("###############  ############### ###############\n", sep="") )
 }
 }
-
+boxplot(rmse.DE_PDE)
+boxplot(rmse.GSR_PDE)
 boxplot( cbind(rmse.DE_PDE, rmse.GSR_PDE) )
 
 

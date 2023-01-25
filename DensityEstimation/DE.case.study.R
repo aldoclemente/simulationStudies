@@ -12,15 +12,39 @@ source("setting.R")
 
 data("chicago")
 
-spat.stat.linnet = chicago$domain
-mesh = as.fdaPDE.spatstat.linnet(chicago$domain)
+{
+vertices = cbind(chicago$domain$vertices$x, chicago$domain$vertices$y)
+edges = cbind( chicago$domain$from, chicago$domain$to)
+
+mesh = create.mesh.1.5D(nodes = vertices, edges = edges)
+
+mesh = normalize_mesh(mesh)
+LN = as.spatstat.linnet.fdaPDE(mesh)
+
+x.m = mean(chicago$domain$vertices$x)
+y.m = mean(chicago$domain$vertices$y)
+
+x.sd = sd(chicago$domain$vertices$x)
+y.sd = sd(chicago$domain$vertices$y)
+
+x.norm = (chicago$data$x - x.m)/x.sd
+y.norm = (chicago$data$y - y.m)/y.sd
+
+chicago.norm = spatstat.linnet::lpp(X= ppp(x.norm, y=y.norm, 
+                                        window= LN$window), 
+                                 L= LN)
+}
+
+#spat.stat.linnet = chicago$domain
+spat.stat.linnet = chicago.norm
+mesh = as.fdaPDE.spatstat.linnet(spat.stat.linnet$domain)
 FEMbasis = create.FEM.basis(mesh)
 Mass = CPP_get.FEM.Mass.Matrix(FEMbasis)
 
 K = 10
 
-dataList = set_Kfold_data(chicago$data, seed = 0)
-n = nrow(chicago$data)
+dataList = set_Kfold_data(spat.stat.linnet$data, seed = 0)
+n = nrow(spat.stat.linnet$data)
 
 date_ = gsub(":","_",gsub(" ","-",Sys.time()))
 if(!dir.exists("data/")) {
@@ -47,7 +71,8 @@ for(i in 1:K){
   test_data = tmp$test_data
 
   # DE-PDE 
-  lambda = 10^seq(from=4.45, to=4.75,length.out = 20)
+  #lambda = 10^seq(from=4.45, to=4.75,length.out = 20)
+  lambda = 10^seq(from=-3.5, to=-2.5,length.out = 20)
   DE_PDE = fdaPDE::DE.FEM(data = cbind(train_data$x, train_data$y), FEMbasis = FEMbasis,
                           lambda = lambda,
                           preprocess_method ="RightCV",
@@ -56,9 +81,9 @@ for(i in 1:K){
   CV_errors[i,1] = cv_error(FEM = FEM(coeff= exp(DE_PDE$g), FEMbasis), 
                             R0 = Mass, data.k = test_data)
     
-  # Training Point Pattern over Chicago Road Network
-  PP_train = lpp(X = ppp(x = train_data$x, y = train_data$y, window = chicago$domain$window),
-                 L = chicago$domain)
+  # Training Point Pattern over spat.stat.linnet Road Network
+  PP_train = lpp(X = ppp(x = train_data$x, y = train_data$y, window = spat.stat.linnet$domain$window),
+                 L = spat.stat.linnet$domain)
   # KDE-PDE
   bw = bw.lppl(X = PP_train)
   KDE_PDE = densityHeat(x = PP_train, sigma = as.numeric(bw)) 
@@ -90,7 +115,7 @@ save(CV_errors, date_, folder.name,
 # Competing methods
 # DE-PDE
 lambda = 10^seq(from=4.45, to=4.75,length.out = 20)
-DE_PDE = fdaPDE::DE.FEM(data = cbind(chicago$data$x, chicago$data$y), FEMbasis = FEMbasis,
+DE_PDE = fdaPDE::DE.FEM(data = cbind(spat.stat.linnet$data$x, spat.stat.linnet$data$y), FEMbasis = FEMbasis,
                         lambda = lambda,
                         preprocess_method ="RightCV",
                         nfolds = 10)
@@ -98,8 +123,8 @@ DE_PDE = fdaPDE::DE.FEM(data = cbind(chicago$data$x, chicago$data$y), FEMbasis =
 DE_PDE.FEM = FEM(coeff= exp(DE_PDE$g), FEMbasis)
 
 # Training Point Pattern over Chicago Road Network
-PP = lpp(X = ppp(x = chicago$data$x, y = chicago$data$y, window = chicago$domain$window),
-               L = chicago$domain)
+PP = lpp(X = ppp(x = spat.stat.linnet$data$x, y = spat.stat.linnet$data$y, window = spat.stat.linnet$domain$window),
+               L = spat.stat.linnet$domain)
 # KDE-PDE
 bw = bw.lppl(X = PP)
 KDE_PDE = densityHeat(x = PP, sigma = as.numeric(bw)) 

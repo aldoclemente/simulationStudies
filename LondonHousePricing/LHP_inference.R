@@ -35,6 +35,9 @@ spat.stat.linnet = linnet(vertices=as.ppp(coords_, W = Windows_),
 
 locs = LN.prop@coords
 
+mesh = as.fdaPDE.spatstat.linnet(spat.stat.linnet)
+FEMbasis = create.FEM.basis(mesh)
+
 locs = cbind( (locs[,1]-x.m)/x.sd, (locs[,2]-y.m)/y.sd)
 LPP = lpp(locs, spat.stat.linnet)
 
@@ -67,10 +70,10 @@ output_CPP = smooth.FEM(observations = observations,
                         locations = locations,
                         FEMbasis = FEMbasis,
                         covariates = X,
-                        lambda = 1.,
-                        lambda.selection.criterion = "newton_fd",
+                        lambda = lambda,
+                        lambda.selection.criterion = "grid",
                         lambda.selection.lossfunction = "GCV",
-                        DOF.evaluation = "exact",
+                        DOF.evaluation = "stochastic",
                         inference.data.object = inference.data.object)
 
 plot(log10(lambda), output_CPP$optimization$GCV_vector)

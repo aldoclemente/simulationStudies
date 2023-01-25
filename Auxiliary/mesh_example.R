@@ -80,9 +80,15 @@ R_plot_mesh.ggplot = function(mesh, alpha = 1, line.size=0.75,
 
 mesh.ref = refine.by.splitting.mesh.1.5D(mesh)
 
+
 pdf("network_notation.pdf")
+
 R_plot_mesh.ggplot(mesh=mesh, points_ = mesh$nodes, 
                    title = bquote(G[]))
+
+R_plot_mesh.ggplot(mesh=mesh, points_ = mesh$nodes, 
+                   title = "")
+
 R_plot_mesh.ggplot(mesh, points_ = mesh$nodes[mesh$nodesmarkers, ], 
                    points.color = "red2", 
                    title = bquote(W[B]) )
@@ -117,6 +123,13 @@ R_plot_mesh.ggplot(mesh.ref,
                    points_ = matrix( mesh.ref$nodes[!mesh.ref$nodesmarkers, ], nrow=nrow(mesh.ref$nodes[!mesh.ref$nodesmarkers, ]),ncol=2), 
                    points.color = "green4", 
                    points2_ = mesh.ref$nodes[mesh.ref$nodesmarkers, ],
+                   points2.color = "red2",
+                   title = "" )
+
+R_plot_mesh.ggplot(mesh, 
+                   points_ = matrix( mesh$nodes[!mesh$nodesmarkers, ], nrow=sum(!mesh$nodesmarkers),ncol=2), 
+                   points.color = "green4", 
+                   points2_ = mesh$nodes[mesh$nodesmarkers, ],
                    points2.color = "red2",
                    title = "" )
 
