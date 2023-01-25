@@ -114,7 +114,6 @@ save(CV_errors, date_, folder.name,
 
 # Competing methods
 # DE-PDE
-lambda = 10^seq(from=4.45, to=4.75,length.out = 20)
 DE_PDE = fdaPDE::DE.FEM(data = cbind(spat.stat.linnet$data$x, spat.stat.linnet$data$y), FEMbasis = FEMbasis,
                         lambda = lambda,
                         preprocess_method ="RightCV",
