@@ -142,7 +142,8 @@ KDE_VORONOI = densityVoronoi(X = PP, sigma = bw)
 
 KDE_VORONOI.FEM = FEM(coeff=as.linfun(KDE_VORONOI)(mesh$nodes[,1], mesh$nodes[,2])/n, FEMbasis)
 
-save(DE_PDE.FEM, KDE_PDE.FEM, KDE_2D.FEM, KDE_VORONOI.FEM, 
+save(DE_PDE.FEM, KDE_PDE.FEM, KDE_2D.FEM, KDE_VORONOI.FEM,
+     spat.stat.linnet,
      file = paste(folder.name,"estimates.RData",sep=""))
 
 source("DE.case.study.post.processing.R")

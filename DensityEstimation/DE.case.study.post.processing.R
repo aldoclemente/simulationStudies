@@ -123,7 +123,12 @@ if(!dir.exists(folder.imgs)) {
   dir.create(folder.imgs)
 }
 
-pdf(paste(folder.imgs,"CV_error.pdf",sep=""))
+date_ = "2023-01-25-16_20_21"
+folder.name = paste("data/chicago/", date_,"/",sep="")
+load(paste(folder.name, "CV_error.RData",sep=""))
+load(paste(folder.name, "estimates.RData",sep=""))
+
+pdf(paste(folder.imgs,"CV_error.pdf", sep=""))
 methods = c(T,T,F,T,T)
 methods.names = c("DE-PDE", "KDE-PDE", "KDE-ES", "KDE-2D", "VORONOI")
 boxplot_CV_error(CV_errors = CV_errors, 
@@ -234,7 +239,7 @@ dev.off()
 
 pdf(paste(folder.imgs, "point_pattern.pdf",sep=""))
 plot(mesh, pch=".")
-points(chicago$data$x, chicago$data$y, pch=16, col="red3")
+points(spat.stat.linnet$data$x, spat.stat.linnet$data$y, pch=16, col="red3")
 dev.off()
 
 pdf("estimates_plasma.pdf")
