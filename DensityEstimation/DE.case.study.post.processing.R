@@ -84,12 +84,21 @@ plot_estimates <-function(estimates, # list of estimates
                           titles = c(rep("",times=length(estimates))) )
   {
   
-  # max.col = -1e8
-  # min.col = 1e8
-  # for(i in 1:length(estimates)){
-  #   max.col = max(estimates[[i]]$coeff, max.col)
-  #   min.col = min(estimates[[i]]$coeff, min.col)
-  # }
+  mesh = estimates[[1]]$FEMbasis$mesh
+  
+  num_edges= dim(mesh$edges)[1]
+  coef=matrix(0, nrow= num_edges, ncol=length(estimates) )
+
+  for(i in 1:length(estimates)){
+  for(e in 1:num_edges){
+    
+    coef[e,i]= (estimates[[i]]$coeff[mesh$edges[e,1]] + estimates[[i]]$coeff[mesh$edges[e,2]])/2  
+    
+    }
+  }
+  
+  max.col = max(coef)
+  min.col = min(coef)
   
   estimates.plot = list()
   
@@ -97,8 +106,8 @@ plot_estimates <-function(estimates, # list of estimates
     
     estimates.plot[[i]] = R_plot_graph.ggplot2.2( estimates[[i]], # FEM object
                                                  line.size = line.size,
-                                                #  color.min = min.col,
-                                                #  color.max = max.col,
+                                                  color.min = min.col,
+                                                  color.max = max.col,
                                                  title = titles[[i]],
                                                  palette=palette,
                                                  legend.pos = "right")
@@ -154,6 +163,16 @@ PLOTS <- plot_estimates(estimates,
 for(i in 1:length(estimates)){
   print(PLOTS[[i]])
 }
+
+PLOTS <- plot_estimates(estimates, 
+                        palette=plasma,
+                        titles = methods.names[methods],
+                        line.size = 0.75)
+
+for(i in 1:length(estimates)){
+  print(PLOTS[[i]])
+}
+
 dev.off()
 
 # ref mesh 
@@ -163,7 +182,9 @@ estimates[[2]] = KDE_PDE.FEM
 estimates[[3]] = KDE_2D.FEM
 estimates[[4]] = KDE_VORONOI.FEM
 
-mesh.ref = refine.mesh.1.5D(DE_PDE.FEM$FEMbasis$mesh, delta = 10)
+mesh.ref = refine.by.splitting.mesh.1.5D(DE_PDE.FEM$FEMbasis$mesh)
+mesh.ref = refine.by.splitting.mesh.1.5D(mesh.ref)
+mesh.ref = refine.by.splitting.mesh.1.5D(mesh.ref)
 FEMbasis.ref = create.FEM.basis(mesh.ref)
 locs = mesh.ref$nodes
 
