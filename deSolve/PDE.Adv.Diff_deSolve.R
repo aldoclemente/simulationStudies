@@ -1,4 +1,4 @@
-setwd("deSolve/")
+#setwd("deSolve/")
 library(fdaPDE)
 library(ReacTran)
 library(latex2exp)
@@ -10,7 +10,7 @@ rmse <- function(x,y){return(sqrt(mean( (x-y)^2)))}
 W_ <- 1.
 R_ <- 1.
 H_ <- 1.
-beta_ <- 2e2
+beta_ <- 1
 
 alpha_ <- H_ * beta_ / R_
 gamma_ <- pi * W_ / R_  
@@ -29,7 +29,7 @@ forcing <- function(points){
   return(-gamma_ * sin(pi * points[,2])) 
 }
 
-N = c(5,10,20,40) #,50) # int. nodes N[i]^2
+N = 4*c(5,10,20,40) #,50) # int. nodes N[i]^2
 
 Dy    <- Dx <- 1.   # diffusion coeff, X- and Y-direction
 errors.l2 <- rep(0, times = length(N))
@@ -73,7 +73,7 @@ Adv.Diff <- function (t, y, parms)  {
                    D.grid = D.grid, 
                    A.grid = A.grid, 
                    VF.grid = VF.grid, 
-                   v.grid = v.grid, full.output = TRUE, full.check = TRUE)$dC
+                   v.grid = v.grid)$dC #full.output = TRUE, full.check = TRUE
   
   dY <- dY - f 
   
@@ -102,11 +102,13 @@ cat("order = ", q, "\n")
 imgdir_ = "imgs/"
 if(!dir.exists(imgdir_))
     dir.create(imgdir_)
-if(beta_ == 2e2) 
+
+if(beta_ == 2e2){ 
     title_ = "adv_dominated_diff_rates_order_1_deSolve.pdf"
-else 
+}else{ 
     title_ = "adv_diff_rates_order_1_deSolve.pdf"    
-     
+}
+
 pdf(paste(imgdir_,title_,sep=""))
 plot(log2(h), log2(errors.l2), col="red", type="b", pch =16, lwd = 3, lty = 2, cex = 2,
         ylim = c(min(log2(h), log2(errors.l2)), max(log2(h), log2(errors.l2))+2),

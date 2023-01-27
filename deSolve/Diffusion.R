@@ -99,7 +99,7 @@ if(!dir.exists(imgdir_))
     
 pdf(paste(imgdir_,"diffusion_rates_order_1_deSolve.pdf",sep=""))
 plot(log2(h), log2(errors.l2), col="red", type="b", pch =16, lwd = 3, lty = 2, cex = 2,
-        ylim = c(min(log2(h^2), log2(errors.l2)), max(log2(h), log2(errors.l2))+2),
+        ylim = c(min(log2(h^2), log2(errors.l2)), max(log2(h), log2(errors.l2))),
         xlab = TeX("$h$"), ylab="", cex.lab=1.25)
 lines(log2(h), log2(h^2), col = "black", type = "b", pch = 16, lwd = 3, lty =2, cex = 2 )
 legend("topleft", legend=c(TeX("$\\| u - u_{ex} \\|_{2}$"), TeX("$h^2$")), 
