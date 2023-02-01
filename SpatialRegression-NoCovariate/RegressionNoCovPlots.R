@@ -24,15 +24,34 @@ RegressionNoCovPlots<-function(imgfile,
   }else{
     p=jet.col
   }
-  max.col = max(true.field)
-  min.col = min(true.field)
   
-  true.spatial.field<- R_plot_graph.ggplot2.2(FEM(true.field, FEMbasis),
+  estimates = mean.field.fdaPDE
+  mesh=FEMbasis$mesh
+  num_edges= dim(mesh$edges)[1]
+  coef=matrix(0, nrow= num_edges, ncol=length(estimates) )
+
+  for(i in 1:ncol(estimates)){
+  for(e in 1:num_edges){
+    
+    coef[e,i]= (estimates[mesh$edges[e,1],i] + estimates[mesh$edges[e,2],i])/2  
+    
+    }
+  }
+  
+  max.col = max(coef)
+  min.col = min(coef)
+
+  max.col.true = max(true.field)
+  min.col.true = min(true.field)
+
+  max.col = max(max.col, max.col.true)
+  min.col = min(min.col, min.col.true)
+
+  true.spatial.field<- R_plot_graph.ggplot2.2(FEM(as.matrix(true.field), FEMbasis),
                          line.size = line.size,
                          color.min = min.col,
                          color.max = max.col,
                          title = bquote(f),
-                      
                          palette=p,
                          legend.pos = "right")
   

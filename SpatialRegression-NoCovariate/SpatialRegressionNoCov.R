@@ -106,7 +106,7 @@ boxplot_RMSE(RMSE, n_data, model_ = c(T,T,T,T),
              legend.pos = c(0.9,0.8625), palette=palette,
              colors=colors)
 dev.off()
-pdf(imgfile_)
+
 RegressionNoCovPlots(imgfile = imgfile_,
                      true.field = field, 
                      mean.field.fdaPDE = mean.field.fdaPDE,
@@ -116,8 +116,7 @@ RegressionNoCovPlots(imgfile = imgfile_,
                      n_data = n_data,
                      palette = palette,
                      legend.pos.RMSE = "right",
-                     line.size=1.)
-dev.off()
+                     line.size=0.65)
 
 
 
