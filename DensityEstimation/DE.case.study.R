@@ -4,7 +4,7 @@
 #################################################
 graphics.off()
 rm(list=ls())
-
+library(fdaPDE)
 setwd("DensityEstimation/")
 source("../utils.R")
 source("utils.R")
@@ -18,17 +18,20 @@ edges = cbind( chicago$domain$from, chicago$domain$to)
 
 mesh = create.mesh.1.5D(nodes = vertices, edges = edges)
 
-mesh = normalize_mesh(mesh)
+#mesh = normalize_mesh(mesh)
+res <- normalize_mesh_unit(mesh)
+mesh <- res$mesh
 LN = as.spatstat.linnet.fdaPDE(mesh)
 
-x.m = mean(chicago$domain$vertices$x)
-y.m = mean(chicago$domain$vertices$y)
+#x.m = mean(chicago$domain$vertices$x)
+#y.m = mean(chicago$domain$vertices$y)
+#x.sd = sd(chicago$domain$vertices$x)
+#y.sd = sd(chicago$domain$vertices$y)
+#x.norm = (chicago$data$x - x.m)/x.sd
+#y.norm = (chicago$data$y - y.m)/y.sd
 
-x.sd = sd(chicago$domain$vertices$x)
-y.sd = sd(chicago$domain$vertices$y)
-
-x.norm = (chicago$data$x - x.m)/x.sd
-y.norm = (chicago$data$y - y.m)/y.sd
+x.norm = (chicago$data$x - res$x.min)/(res$x.max-res$x.min)
+y.norm = (chicago$data$y - res$y.min)/(res$y.max-res$y.min)
 
 chicago.norm = spatstat.linnet::lpp(X= ppp(x.norm, y=y.norm, 
                                         window= LN$window), 
