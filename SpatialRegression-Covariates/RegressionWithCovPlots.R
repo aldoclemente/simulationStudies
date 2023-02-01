@@ -27,22 +27,40 @@ RegressionWithCovPlots<-function(imgfile,
     p=jet.col
   }
   
-  max.col = max(true.field, mean.field.fdaPDE)
-  min.col  = min(true.field, mean.field.fdaPDE)
+  mesh=FEMbasis$mesh
+  num_edges= dim(mesh$edges)[1]
+  coef=matrix(0, nrow= num_edges, ncol=length(estimates) )
+
+  for(i in 1:ncol(estimates)){
+  for(e in 1:num_edges){
+    
+    coef[e,i]= (estimates[mesh$edges[e,1],i] + estimates[mesh$edges[e,2],i])/2  
+    
+    }
+  }
+  
+  max.col = max(coef)
+  min.col = min(coef)
+
+  max.col.true = max(true.field)
+  min.col.true = min(true.field)
+
+  max.col = max(max.col, max.col.true)
+  min.col = min(min.col, min.col.true)
   
   true.spatial.field<- R_plot_graph.ggplot2.2(FEM(true.field, FEMbasis),
                                               line.size = line.size,
                                               color.min = min.col,
                                               color.max = max.col,
                                               title = bquote(f),
-                                              return.ggplot.object = T,
+                                           
                                               palette=p,
                                               legend.pos = "right")
   
   true.spatial.signal<- R_plot_graph.ggplot2.2(FEM(true.signal, FEMbasis),
                                               line.size = line.size,
                                               title = TeX("$f + W\\beta$", italic = T),
-                                              return.ggplot.object = T,
+                                              
                                               palette=p,
                                               legend.pos = "right")
   
@@ -56,7 +74,7 @@ RegressionWithCovPlots<-function(imgfile,
                                                  color.max = max.col,
                                                  title = bquote(hat(f) ~ .(paste("(n=",n_data[1],")",sep=""))), #expression(hat(f) ~ paste("(n=",n_data[1],")",sep="")),
                                                  
-                                                 return.ggplot.object = T,
+                                                
                                                  palette=p,
                                                  legend.pos = "right")
   mean.spatial.field.2 <- R_plot_graph.ggplot2.2(FEM(mean.field.fdaPDE[,2], FEMbasis),
@@ -64,7 +82,7 @@ RegressionWithCovPlots<-function(imgfile,
                                                  color.min = min.col,
                                                  color.max = max.col,
                                                  title = bquote(hat(f) ~ .(paste("(n=",n_data[2],")",sep=""))),
-                                                 return.ggplot.object = T,
+                                                
                                                  palette=p,
                                                  legend.pos = "right")
   mean.spatial.field.3 <- R_plot_graph.ggplot2.2(FEM(mean.field.fdaPDE[,3], FEMbasis),
@@ -72,7 +90,7 @@ RegressionWithCovPlots<-function(imgfile,
                                                  color.min = min.col,
                                                  color.max = max.col,
                                                  title = bquote(hat(f) ~ .(paste("(n=",n_data[3],")",sep=""))),
-                                                 return.ggplot.object = T,
+                                                
                                                  palette=p,
                                                  legend.pos = "right")
   mean.spatial.field.4 <- R_plot_graph.ggplot2.2(FEM(mean.field.fdaPDE[,4], FEMbasis),
@@ -80,11 +98,11 @@ RegressionWithCovPlots<-function(imgfile,
                                                  color.min = min.col,
                                                  color.max = max.col,
                                                  title = bquote(hat(f) ~ .(paste("(n=",n_data[4],")",sep=""))),
-                                                 return.ggplot.object = T,
+                                               
                                                  palette=p,
                                                  legend.pos = "right")
   
-  nnodes = nrow(FEMbasis$mesh$nodes)
+  nnodes = nrox(FEMbasis$mesh$nodes)
   sample_ = sample(1:nnodes, n_data[1])
   points_ = FEMbasis$mesh$nodes[sample_,]
   mu_ =  observations[sample_]
@@ -93,7 +111,7 @@ RegressionWithCovPlots<-function(imgfile,
                                                mu = mu_, 
                                                line.size=line.size,
                                                palette=p,
-                                               title = bquote(z[i] == bold(w)[i]^T * bold(beta) + f(bold(p)[i]) + epsilon[i] )) #bold(w)[i]^T * bold(beta)
+                                               title = bquote(z[i] == bold(x)[i]^T * bold(beta) + f(bold(p)[i]) + epsilon[i] )) #bold(x)[i]^T * bold(beta)
   
   sample_ = sample(1:nnodes, n_data[2])
   points_ = FEMbasis$mesh$nodes[sample_,]
@@ -103,7 +121,7 @@ RegressionWithCovPlots<-function(imgfile,
                                                mu = mu_, 
                                                line.size=line.size,
                                                palette=p,
-                                               title = bquote(z[i] == bold(w)[i]^T * bold(beta) + f(bold(p)[i]) + epsilon[i] ))
+                                               title = bquote(z[i] == bold(x)[i]^T * bold(beta) + f(bold(p)[i]) + epsilon[i] ))
   
   sample_ = sample(1:nnodes, n_data[3])
   points_ = FEMbasis$mesh$nodes[sample_,]
@@ -113,7 +131,7 @@ RegressionWithCovPlots<-function(imgfile,
                                                mu = mu_, 
                                                line.size=line.size,
                                                palette=p,
-                                               title = bquote(z[i] == bold(w)[i]^T * bold(beta) + f(bold(p)[i]) + epsilon[i] ))
+                                               title = bquote(z[i] == bold(x)[i]^T * bold(beta) + f(bold(p)[i]) + epsilon[i] ))
   
   sample_ = sample(1:nnodes, n_data[4])
   points_ = FEMbasis$mesh$nodes[sample_,]
@@ -138,7 +156,7 @@ RegressionWithCovPlots<-function(imgfile,
                                                  palette=p,
                                                  legend.pos = "right")
   
-  nnodes = nrow(FEMbasis$mesh$nodes)
+  nnodes = nrox(FEMbasis$mesh$nodes)
   sample_ = sample(1:nnodes, n_data[1])
   points_ = FEMbasis$mesh$nodes[sample_,]
   firstCov.example.1 <- R_plot_mesh.ggplot(mesh = FEMbasis$mesh,

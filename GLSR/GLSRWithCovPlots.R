@@ -2,6 +2,7 @@
 library(gridExtra)
 library(ggplot2)
 library(latex2exp)
+library(viridis)
 source("../Auxiliary/R_plot_graph.ggplot2.R")
 
 GLRWithCovPlots<-function(imgfile,
@@ -26,22 +27,41 @@ GLRWithCovPlots<-function(imgfile,
     p=jet.col
   }
   
-  max.col = max(true.field, mean.field.fdaPDE)
-  min.col  = min(true.field, mean.field.fdaPDE)
+  mesh=FEMbasis$mesh
+  num_edges= dim(mesh$edges)[1]
+  estimates = mean.field.fdaPDE
+  coef=matrix(0, nrow= num_edges, ncol=ncol(estimates) )
+
+  for(i in 1:ncol(estimates)){
+  for(e in 1:num_edges){
+    
+    coef[e,i]= (estimates[mesh$edges[e,1],i] + estimates[mesh$edges[e,2],i])/2  
+    
+    }
+  }
+  
+  max.col = max(coef)
+  min.col = min(coef)
+
+  max.col.true = max(true.field)
+  min.col.true = min(true.field)
+
+  max.col = max(max.col, max.col.true)
+  min.col = min(min.col, min.col.true)
   
   true.spatial.field<- R_plot_graph.ggplot2.2(FEM(true.field, FEMbasis),
                                               line.size = line.size,
                                               color.min = min.col,
                                               color.max = max.col,
                                               title = bquote(f),
-                                              return.ggplot.object = T,
+                                             
                                               palette=p,
                                               legend.pos = "right")
   
   true.spatial.signal<- R_plot_graph.ggplot2.2(FEM(true.signal, FEMbasis),
                                                line.size = line.size,
                                                title = TeX("$f + W\\beta$", italic = T),
-                                               return.ggplot.object = T,
+                                             
                                                palette=p,
                                                legend.pos = "right")
   
@@ -55,7 +75,7 @@ GLRWithCovPlots<-function(imgfile,
                                                  color.max = max.col,
                                                  title = bquote(hat(f) ~ .(paste("(n=",n_data[1],")",sep=""))), #expression(hat(f) ~ paste("(n=",n_data[1],")",sep="")),
                                                  
-                                                 return.ggplot.object = T,
+                                             
                                                  palette=p,
                                                  legend.pos = "right")
   mean.spatial.field.2 <- R_plot_graph.ggplot2.2(FEM(mean.field.fdaPDE[,2], FEMbasis),
@@ -63,7 +83,7 @@ GLRWithCovPlots<-function(imgfile,
                                                  color.min = min.col,
                                                  color.max = max.col,
                                                  title = bquote(hat(f) ~ .(paste("(n=",n_data[2],")",sep=""))),
-                                                 return.ggplot.object = T,
+                                             
                                                  palette=p,
                                                  legend.pos = "right")
   mean.spatial.field.3 <- R_plot_graph.ggplot2.2(FEM(mean.field.fdaPDE[,3], FEMbasis),
@@ -71,7 +91,7 @@ GLRWithCovPlots<-function(imgfile,
                                                  color.min = min.col,
                                                  color.max = max.col,
                                                  title = bquote(hat(f) ~ .(paste("(n=",n_data[3],")",sep=""))),
-                                                 return.ggplot.object = T,
+                                               
                                                  palette=p,
                                                  legend.pos = "right")
   mean.spatial.field.4 <- R_plot_graph.ggplot2.2(FEM(mean.field.fdaPDE[,4], FEMbasis),
@@ -79,7 +99,7 @@ GLRWithCovPlots<-function(imgfile,
                                                  color.min = min.col,
                                                  color.max = max.col,
                                                  title = bquote(hat(f) ~ .(paste("(n=",n_data[4],")",sep=""))),
-                                                 return.ggplot.object = T,
+                                              
                                                  palette=p,
                                                  legend.pos = "right")
   
@@ -92,7 +112,7 @@ GLRWithCovPlots<-function(imgfile,
                                                mu = mu_, 
                                                line.size=line.size,
                                                palette=p,
-                                               title = bquote(g(mu[i]) == bold(w)[i]^T * bold(beta) + f(bold(p)[i]))) #bold(w)[i]^T * bold(beta)
+                                               title = bquote(g(mu[i]) == bold(x)[i]^T * bold(beta) + f(bold(p)[i]))) #bold(x)[i]^T * bold(beta)
   
   sample_ = sample(1:nnodes, n_data[2])
   points_ = FEMbasis$mesh$nodes[sample_,]
@@ -102,7 +122,7 @@ GLRWithCovPlots<-function(imgfile,
                                                mu = mu_, 
                                                line.size=line.size,
                                                palette=p,
-                                               title = bquote(g(mu[i]) == bold(w)[i]^T * bold(beta) + f(bold(p)[i])))
+                                               title = bquote(g(mu[i]) == bold(x)[i]^T * bold(beta) + f(bold(p)[i])))
   
   sample_ = sample(1:nnodes, n_data[3])
   points_ = FEMbasis$mesh$nodes[sample_,]
@@ -112,7 +132,7 @@ GLRWithCovPlots<-function(imgfile,
                                                mu = mu_, 
                                                line.size=line.size,
                                                palette=p,
-                                               title = bquote(g(mu[i]) == bold(w)[i]^T * bold(beta) + f(bold(p)[i])))
+                                               title = bquote(g(mu[i]) == bold(x)[i]^T * bold(beta) + f(bold(p)[i])))
   
   sample_ = sample(1:nnodes, n_data[4])
   points_ = FEMbasis$mesh$nodes[sample_,]
@@ -122,18 +142,18 @@ GLRWithCovPlots<-function(imgfile,
                                                mu = mu_, 
                                                line.size=line.size,
                                                palette=p,
-                                               title = bquote(g(mu[i]) == bold(w)[i]^T * bold(beta) + f(bold(p)[i])))
+                                               title = bquote(g(mu[i]) == bold(x)[i]^T * bold(beta) + f(bold(p)[i])))
   
   firstCov <- R_plot_graph.ggplot2.2(FEM(W[,1], FEMbasis),
                                      line.size = line.size,
                                      title = bquote(N(0.5, 0.25^2)), #"First Covariate", #expression(hat(f) ~ paste("(n=",n_data[1],")",sep="")),
-                                     return.ggplot.object = T,
+                                
                                      palette=p,
                                      legend.pos = "right")
   secondCov <- R_plot_graph.ggplot2.2(FEM(W[,2], FEMbasis),
                                       line.size = line.size,
                                       title = "sinusoidal function", # second covariate
-                                      return.ggplot.object = T, 
+                                    
                                       palette=p,
                                       legend.pos = "right")
   

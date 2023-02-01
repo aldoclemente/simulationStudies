@@ -7,12 +7,14 @@
 setwd("../GLSR")
 library(plotrix)
 library(purrr)
+library(fdaPDE)
 source("../utils.R")
+source("../settings.R")
 source("../SpatialRegression-NoCovariate/NoCovariatesCore.R")
 source("GLSRCore.R")
 #source("plots.R")
 source("../Auxiliary/R_plot_graph.ggplot2.R")
-source("settings.R")
+#source("settings.R")
 {
  pdf("img/networks.pdf")  
  set = setting(network = "estevan")
@@ -50,31 +52,35 @@ inv.link<-l$linkinv
   inv.link = inv.logit
 }
 # in ../utils.R 
-ND_ = compute_NetworkDist_matrix(mesh, 1:nnodes)
-ED_ = computed_EuclideanDist_matrix(mesh, 1:nnodes)
+# ND_ = compute_NetworkDist_matrix(mesh, 1:nnodes)
+# ED_ = computed_EuclideanDist_matrix(mesh, 1:nnodes)
+spat.stat.linnet <- as.spatstat.linnet.fdaPDE(mesh)
+ND_ <- spatstat.linnet::crossdist.lpp(X= as.LPP(mesh$nodes, spat.stat.linnet),
+                                        Y= as.LPP(mesh$nodes,spat.stat.linnet))
+ED_ <- NULL 
 set.seed(31415)
 
 # Test 1: ONTARIO, POISSON (func -> EXP)
 #sources 63, 1308, 1018, 1125
-
-field = fun(func)(ND_,source = 63,sigma = 2)
-field.2 = fun(func)(ND_,source = 1308,sigma = 1.25)
-field.3 = fun(func)(ND_,source = 1018,sigma = 2)
-field.4 = fun(func)(ND_,source = 1125,sigma = 1.25)
+sample.idx =c(250, 1000, 950, 63)
+field = fun(func)(ND_,source = sample.idx[1],sigma = 0.175)
+field.2 = fun(func)(ND_,source = sample.idx[2],sigma = 0.175)
+field.3 = fun(func)(ND_,source = sample.idx[3],sigma = 0.35)
+field.4 = fun(func)(ND_,source = sample.idx[4],sigma = 0.35)
 
 field = field + field.2 + field.3 + field.4
 plot(FEM(field, FEMbasis))
 
 W = matrix(nrow=nnodes, ncol=2)
 W[,1] = rnorm(nnodes, mean=0.5,sd=0.25)
-W[,2] = 1/4 * fun("sin")(ND_, source=63, sigma=10)
+W[,2] = 1/4 * fun("sin")(ND_, source=63, sigma=1.5)
 plot(FEM(W[,2],FEMbasis))
 betas = c(1.,1.)
 
 signal = field + W%*%betas
 param = signal + rnorm(nnodes, mean=0, sd=0.05*diff(range(signal)))
 param = signal 
-lambda = 10^seq(from=0,to=2,length.out=25)
+lambda = 10^seq(from=-3,to=0,length.out=25)
 lambda.2D = NULL
 ####
 
@@ -112,20 +118,24 @@ estimates = results$estimates
 boxplot_RMSE(RMSE, n_data, model_ = c(T,T,F,F),
              names_ = c("fdaPDE","GWR","",""))
 
-head = "estimates"
-tail_ = "method"
 date_ = gsub(":","_",gsub(" ","-",Sys.time()))
 
 if(domain=="estevan"){
-  head = "test-1"
+  head = "test-1/"
 }else{
-  head = "test-2"
+  head = "test-2/"
 }
 date_ = gsub(":","_",gsub(" ","-",Sys.time()))
-tail_ = paste(domain, func, date_, sep="-")
 
-filename_ = paste(paste(paste("data/",head,sep=""),tail_, sep="-"), ".RData", sep="")
-imgfile_  = paste(paste(paste(paste("img/" ,head,sep=""),"plots",sep="-"),tail_,sep="-"),".pdf",sep="")
+if(!dir.exists("data/"))
+  dir.create("data/")
+
+foldername_ = paste("data/",head, sep = "")
+if(!dir.exists(foldername_))
+  dir.create(foldername_)
+
+foldername_ = paste(foldername_, date_, "/",sep = "")
+dir.create(foldername_)
 
 save(RMSE, 
      n_data, 
@@ -138,14 +148,10 @@ save(RMSE,
      estimates,
      W,
      betas, 
-     file = filename_)
-
-
-
-
+     file = paste(foldername_, "data.RData",sep=""))
 
 palette = "magma" # "viridis" "magma
-imgfile_ = paste("img/GLSR-",palette,".pdf",sep="")
+imgfile_ = paste(foldername_,"imgs.pdf",sep="")
 
 if(palette == "ggplot")
   palette=NULL
@@ -157,7 +163,8 @@ GLRNoCovPlots(imgfile,
              RMSE,legend.pos.RMSE = c(0.85, 0.85))
 }else{
 # # # img with cov # # # 
-source("GLSRWithCovPlots.R") # ? esattamente la stessa... interessant
+source("GLSRWithCovPlots.R") 
+palette = "viridis"
 GLRWithCovPlots(imgfile=imgfile_,
               true.field=field,
               true.signal = signal,
@@ -191,10 +198,10 @@ RegressionWithCovPlots(imgfile="img/prova.pdf",
                 W=W, betas=betas,
                 RMSE,legend.pos.RMSE = "right",
                 palette=palette,
-                line.size = 0.5)
+                line.size = 0.65)
 
 colors = viridis(n=2, begin=0.95, end=0.25)
-pdf("img/RMSE-GSR.pdf")
+pdf(paste(foldername_,"RMSE-GSR.pdf",sep=""))
 boxplot_RMSE(RMSE, n_data, model_ = c(T,T,F,F), 
              names_ = c("SR-PDE","GWR","",""),
              legend.pos = c(0.825,0.8625), palette=palette,
