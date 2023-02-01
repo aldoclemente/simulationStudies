@@ -1,11 +1,12 @@
-library(fdaPDE)
+
 library(spatstat)
 library(maptools)
 library(shp2graph)
 library(igraph)
 library(rgeos)
-#library(GWmodel)
-#library(diffusionMaps)
+library(spam)
+library(GWmodel)
+library(diffusionMaps)
 
 
 #' Utility to convert fdaPDE Linear Network mesh into SpatialLinesDataFrame. 
@@ -175,6 +176,25 @@ normalize_mesh <-function(mesh){
   return(mesh.norm)
 }
 
+normalize_mesh_unit <-function(mesh){
+  
+  x.min = min(mesh$nodes[,1])
+  y.min = min(mesh$nodes[,2])
+  
+  x.max = max(mesh$nodes[,1])
+  y.max = max(mesh$nodes[,2])
+  
+  x.norm = (mesh$nodes[,1] - x.min)/(x.max-x.min)
+  y.norm = (mesh$nodes[,2] - y.min)/(y.max-y.min)
+
+  mesh.norm = create.mesh.1.5D(nodes=cbind(x.norm,y.norm), edges = mesh$edges)  
+
+  ret = list(mesh=mesh.norm,
+             x.min=x.min, y.min = y.min, x.max= x.max, y.max= y.max)
+  
+  return(ret)
+}
+
 #' Compute the Network distance matrix assuming that locations are a subset of mesh
 #' nodes. It is used to solve GWTR over Linear Networks.
 #' @param mesh, fdaPDE Linear Network mesh
@@ -296,4 +316,8 @@ as.fdaPDE.spatstat.linnet <- function(spat.stat.linnet){
   mesh = create.mesh.1.5D(nodes, edges)
   
   return(mesh)
+}
+
+as.LPP <-function(points_,L){
+  return(as.lpp(x=points_[,1],y=points_[,2],L=L))
 }

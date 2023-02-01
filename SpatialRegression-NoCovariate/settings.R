@@ -45,8 +45,9 @@ setting <-function(network = "" ){
   data("ORN")
   
   mesh = as.fdaPDE.SpatialLinesDataFrame(ORN.nt)
-  mesh = normalize_mesh(mesh)
-  mesh = refine.mesh.1.5D(mesh, delta=0.05)
+  #mesh = normalize_mesh(mesh)
+  mesh = normalize_mesh_unit(mesh)$mesh
+  mesh = refine.mesh.1.5D(mesh$mesh, delta=0.0125)
   
   mesh.2D = create.mesh.2D(nodes=mesh$nodes)
   mesh.2D = refine.mesh.2D(mesh.2D, minimum_angle = 20, maximum_area = 0.05/4)
@@ -66,8 +67,9 @@ setting <-function(network = "" ){
     data("ERN_OSM_correct")
     
     mesh = as.fdaPDE.SpatialLinesDataFrame(ERN_OSM_cor.nt)
-    mesh = normalize_mesh(mesh)
-    mesh = refine.mesh.1.5D(mesh, delta=0.05)
+    #mesh = normalize_mesh(mesh)
+    mesh = normalize_mesh_unit(mesh)$mesh
+    mesh = refine.mesh.1.5D(mesh, delta=0.0125)
     
     mesh.2D = create.mesh.2D(mesh$nodes)
     mesh.2D = refine.mesh.2D(mesh.2D, minimum_angle = 20, maximum_area = 0.0125/4 )
@@ -105,8 +107,9 @@ setting.NO.norm <-function(network="estevan"){
     data("ORN")
     
     mesh = as.fdaPDE.SpatialLinesDataFrame(ORN.nt)
-    mesh = normalize_mesh(mesh)
-    mesh = refine.mesh.1.5D(mesh, delta=0.05)
+    #mesh = normalize_mesh(mesh)
+    mesh = normalize_mesh_unit(mesh)$mesh
+    mesh = refine.mesh.1.5D(mesh, delta=0.0125)
     
     mesh.2D = create.mesh.2D(nodes=mesh$nodes)
     mesh.2D = refine.mesh.2D(mesh.2D, minimum_angle = 20, maximum_area = 0.05/4)

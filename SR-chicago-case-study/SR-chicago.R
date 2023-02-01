@@ -46,7 +46,7 @@ FEMbasis = create.FEM.basis(mesh)
 
 #setting regions 
 nnodes = nrow(mesh$nodes)
-nregion = 12 #8 #6 #10 
+nregion = 16 #8 #6 #10 
 nedges = nrow(mesh$edges)
 ndata = length(DATA$data$x)
 
@@ -123,10 +123,9 @@ GSR_PDE <- smooth.FEM(observations = response,
                          family="poisson")
 
 lambda_opt <- GSR_PDE$optimization$lambda_position
-# sqrt(GCV_ * (sum(!is.na(observations)) - dof)/sum(!is.na(observations)))
 {
 x11()
-plot(log10(lambda), GSR_PDE$optimization$GCV_vector, xlab="log10(lambda)", ylab="GCV")
+plot(log10(lambda_GSR), GSR_PDE$optimization$GCV_vector, xlab="log10(lambda)", ylab="GCV")
 }
 
 Mass = fdaPDE::CPP_get.FEM.Mass.Matrix(FEMbasis)
@@ -250,6 +249,9 @@ DE_PDE = fdaPDE::DE.FEM(data = cbind(DATA$data$x, DATA$data$y), FEMbasis = FEMba
                         nfolds = 10)
 DE_PDE.FEM = FEM(coeff= exp(DE_PDE$g), FEMbasis)
 
+save(GSR_PDE.FEM, DE_PDE.FEM, 
+      file = paste(folder.name, "estimates.RData", sep=""))
+
 {
 library(ggplot2)
 library(viridis)
@@ -332,24 +334,41 @@ if(!dir.exists(folder.imgs)) {
 pdf(paste(folder.imgs,"CV_error.pdf",sep=""))
 methods = c(T,T,F,F)
 methods.names = c("DE-PDE", "GSR-PDE")
-boxplot_CV_error(CV_errors = CV_errors, 
+print(boxplot_CV_error(CV_errors = CV_errors, 
                  methods = methods,
-                 methods.names = methods.names)
+                 methods.names = methods.names))
 dev.off()
 }
 
 {
-pdf(paste(folder.imgs, "estimates.pdf",sep=""))
+pdf(paste(folder.imgs, "estimates_2.pdf",sep=""))
+
 estimates = list()
 estimates[[1]] = DE_PDE.FEM
 estimates[[2]] = GSR_PDE.FEM
+
+num_edges= dim(mesh$edges)[1]
+coef=matrix(0, nrow= num_edges, ncol=length(estimates) )
+
+for(i in 1:length(estimates)){
+for(e in 1:num_edges){
+    
+  coef[e,i]= (estimates[[i]]$coeff[mesh$edges[e,1]] + estimates[[i]]$coeff[mesh$edges[e,2]])/2  
+    
+  }
+}
+  
+max.col = max(coef)
+min.col = min(coef)
 
 PLOTS = list()
 for(i in 1:length(estimates))
 {
     PLOTS[[i]] = R_plot_graph.ggplot2.2( estimates[[i]], 
                                           title = methods.names[i],
-                                          palette=viridis)
+                                          color.min = min.col,
+                                          color.max = max.col,
+                                           palette=viridis)
     
 }
 
@@ -361,6 +380,8 @@ PLOTS = list()
 for(i in 1:length(estimates)){
     PLOTS[[i]] = R_plot_graph.ggplot2.2( estimates[[i]], # FEM object
                                           title = methods.names[[i]],
+                                          color.min = min.col,
+                                          color.max = max.col,
                                           palette=magma)
     
 }
@@ -373,6 +394,8 @@ PLOTS = list()
 for(i in 1:length(estimates)){
     PLOTS[[i]] = R_plot_graph.ggplot2.2( estimates[[i]], # FEM object
                                           title = methods.names[[i]],
+                                          color.min = min.col,
+                                          color.max = max.col,
                                           palette=jet.col)
     
 }
@@ -392,17 +415,33 @@ mesh.ref = refine.mesh.1.5D(DE_PDE.FEM$FEMbasis$mesh, delta = 0.125)
 FEMbasis.ref = create.FEM.basis(mesh.ref)
 locs = mesh.ref$nodes
 
+num_edges= dim(mesh.ref$edges)[1]
+coef=matrix(0, nrow= num_edges, ncol=length(estimates) )
+
+for(i in 1:length(estimates)){
+for(e in 1:num_edges){
+    
+  coef[e,i]= (estimates[[i]]$coeff[mesh.ref$edges[e,1]] + estimates[[i]]$coeff[mesh.ref$edges[e,2]])/2  
+    
+  }
+}
+  
+max.col = max(coef)
+min.col = min(coef)
+
 for(i in 1:length(estimates))
   estimates[[i]] = FEM(eval.FEM(estimates[[i]], locations = locs),
                        FEMbasis.ref)
 
 {
-pdf(paste(folder.imgs, "estimates_ref.pdf",sep=""))
+pdf(paste(folder.imgs, "estimates_ref_2.pdf",sep=""))
 PLOTS = list()
 for(i in 1:length(estimates))
 {
     PLOTS[[i]] = R_plot_graph.ggplot2.2( estimates[[i]], 
                                           title = methods.names[i],
+                                          color.min = min.col,
+                                          color.max = max.col,
                                           palette=viridis)
     
 }
@@ -415,6 +454,8 @@ PLOTS = list()
 for(i in 1:length(estimates)){
     PLOTS[[i]] = R_plot_graph.ggplot2.2( estimates[[i]], # FEM object
                                           title = methods.names[[i]],
+                                          color.min = min.col,
+                                          color.max = max.col,
                                           palette=magma)
     
 }
@@ -427,6 +468,8 @@ PLOTS = list()
 for(i in 1:length(estimates)){
     PLOTS[[i]] = R_plot_graph.ggplot2.2( estimates[[i]], # FEM object
                                           title = methods.names[[i]],
+                                          color.min = min.col,
+                                          color.max = max.col,
                                           palette=jet.col)
     
 }

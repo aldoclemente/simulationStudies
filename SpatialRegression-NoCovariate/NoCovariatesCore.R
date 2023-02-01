@@ -137,9 +137,10 @@ for(j in 1:length(n_data)){
     matNames = as.character(1:nrow(locations))
     rownames(ND) = matNames
     colnames(ND) = matNames
-    rownames(ED) = matNames
-    colnames(ED) = matNames
-    
+    if(!is.null(ED)){
+      rownames(ED) = matNames
+      colnames(ED) = matNames
+    }
     knots = create_knots(locations=locations)
     
     RR.krig = rank_reduced_kriging(observations, 

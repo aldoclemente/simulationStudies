@@ -2,11 +2,12 @@ rm(list=ls())
 graphics.off()
 
 setwd("LondonHousePricing/")
-filename = "data/2023-01-11-14_14_56/LHP.RData"
+#filename = "data/2023-01-11-14_14_56/LHP.RData"
 
-load(filename)
+#load(filename)
 library(viridis)
 library(colorspace)
+library(fdaPDE, lib.loc= .libPaths()[1]) # NO-CRAN
 source("../utils.R")
 source("LNH_utils.R")
 library(GWmodel)
@@ -62,7 +63,8 @@ inference.data.object <- inferenceDataObjectBuilder(test = "oat",
                                                     component = "parametric",
                                                     type = "w",  
                                                     dim = 2,
-                                                    n_cov = n_cov)
+                                                    n_cov = n_cov,
+                                                    exact = FALSE) #NO-CRAN
 
 lambda = 10^seq(from=-3,to=-1.5,length.out=20) 
 # NOPE

@@ -162,8 +162,8 @@ rmse.plot <- boxplot_RMSE(rmse.SR.PDE = RMSE.prediction$RMSE.fdaPDE,
                           title.size = 26, title="CV-RMSE")
 
 pdf(imgfile)
-rmse.plot
-Field.plot
+print(rmse.plot)
+print(Field.plot)
 for(i in 1:K){
   print( R_plot_graph.ggplot2.2(FEM(field.estimate[,i],FEMbasis),
                                 line.size = line.size,

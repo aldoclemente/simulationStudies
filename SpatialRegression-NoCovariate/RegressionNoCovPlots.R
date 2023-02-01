@@ -2,7 +2,7 @@ library(viridis)
 library(gridExtra)
 library(ggplot2)
 library(latex2exp)
-source("C:/Users/Aldo/Desktop/simulationStudies/Auxiliary/R_plot_graph.ggplot2.R")
+source("../Auxiliary/R_plot_graph.ggplot2.R")
 
 # length(n_data) == 4
 # ncol(mean.field.fdaPDE) == 4
@@ -32,7 +32,7 @@ RegressionNoCovPlots<-function(imgfile,
                          color.min = min.col,
                          color.max = max.col,
                          title = bquote(f),
-                         return.ggplot.object = T,
+                      
                          palette=p,
                          legend.pos = "right")
   
@@ -45,8 +45,7 @@ RegressionNoCovPlots<-function(imgfile,
                                            color.min = min.col,
                                            color.max = max.col,
                                            title = bquote(hat(f) ~ .(paste("(n=",n_data[1],")",sep=""))), #expression(hat(f) ~ paste("(n=",n_data[1],")",sep="")),
-                                           
-                                           return.ggplot.object = T, 
+                                          
                                            palette=p,
                                            legend.pos = "right")
   mean.spatial.field.2 <- R_plot_graph.ggplot2.2(FEM(mean.field.fdaPDE[,2], FEMbasis),
@@ -54,7 +53,7 @@ RegressionNoCovPlots<-function(imgfile,
                                                color.min = min.col,
                                                color.max = max.col,
                                                title = bquote(hat(f) ~ .(paste("(n=",n_data[2],")",sep=""))),
-                                               return.ggplot.object = T, 
+                                            
                                                palette=p,
                                                legend.pos = "right")
   mean.spatial.field.3 <- R_plot_graph.ggplot2.2(FEM(mean.field.fdaPDE[,3], FEMbasis),
@@ -62,7 +61,7 @@ RegressionNoCovPlots<-function(imgfile,
                                                color.min = min.col,
                                                color.max = max.col,
                                                title = bquote(hat(f) ~ .(paste("(n=",n_data[3],")",sep=""))),
-                                               return.ggplot.object = T,
+                                      
                                                palette=p,
                                                legend.pos = "right")
   mean.spatial.field.4 <- R_plot_graph.ggplot2.2(FEM(mean.field.fdaPDE[,4], FEMbasis),
@@ -70,7 +69,6 @@ RegressionNoCovPlots<-function(imgfile,
                                                color.min = min.col,
                                                color.max = max.col,
                                                title = bquote(hat(f) ~ .(paste("(n=",n_data[4],")",sep=""))),
-                                               return.ggplot.object = T, 
                                                palette=p,
                                                legend.pos = "right")
 
