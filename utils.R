@@ -321,3 +321,4 @@ as.fdaPDE.spatstat.linnet <- function(spat.stat.linnet){
 as.LPP <-function(points_,L){
   return(as.lpp(x=points_[,1],y=points_[,2],L=L))
 }
+

@@ -247,7 +247,7 @@ R_plot_mesh.ggplot = function(mesh, alpha = 1, line.size=0.5,
   return(ret)
   }else if(is.null(mesh.2D) && !is.null(points_)){
     if(num.col>2){
-     p = palette(n=num.col, alpha=0.8)
+     p = palette(n=num.col, alpha=alpha)
     }else{
      p = c("red3", "green4")
     }

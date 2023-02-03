@@ -7,7 +7,6 @@
 setwd("SpatialRegression-NoCovariate/")
 library(KrigLinCaution)
 library(fdaPDE)
-library(plotrix)
 source("../utils.R")
 source("../create_knots.R")
 source("settings.R")
@@ -82,23 +81,26 @@ if(!dir.exists("data/"))
 
 if(!dir.exists(foldername_))
   dir.create(foldername_)
-#filename_ = paste(paste(paste("data/",head,sep=""),tail_, sep="-"), ".RData", sep="")
-imgfile_  = paste(paste(paste(paste("img/" ,head,sep=""),"plots",sep="-"),tail_,sep="-"),".pdf",sep="")
-imgfile_ = paste(foldername_,"imgs.pdf",sep="")
 
 save(RMSE, field, observations_, n_data, mean.field.fdaPDE, imgfile_, FEMbasis, estimates,
-     file = paste(foldername_,"data.RData"))
+     foldername_,
+     file = paste(foldername_,"data.RData",sep=""))
 
 #################################
 # imgs #
+load("data/test-1/data.RData")
 source("RegressionNoCovPlots.R")
+library(plotrix)
+imgfolder_ = paste(foldername_, "imgs/",sep="")
+if(!dir.exists(imgfolder_))
+  dir.create(imgfolder_)
 
 palette = "viridis" # "viridis" "magma
 
 if(palette == "ggplot")
   palette=NULL
 
-pdf(paste(foldername_,"RMSE.pdf",sep=""),width=12)
+pdf(paste(imgfolder_,"RMSE.pdf",sep=""),width=12)
 colors = viridis(n=4, begin=0.95, end=0.25)
 
 boxplot_RMSE(RMSE, n_data, model_ = c(T,T,T,T), 
@@ -107,7 +109,8 @@ boxplot_RMSE(RMSE, n_data, model_ = c(T,T,T,T),
              colors=colors)
 dev.off()
 
-RegressionNoCovPlots(imgfile = imgfile_,
+line.size = 0.75
+RegressionNoCovPlots(imgfile = paste(imgfolder_, "estimates-",line.size,".pdf",sep=""),
                      true.field = field, 
                      mean.field.fdaPDE = mean.field.fdaPDE,
                      observations = observations_,
@@ -116,7 +119,7 @@ RegressionNoCovPlots(imgfile = imgfile_,
                      n_data = n_data,
                      palette = palette,
                      legend.pos.RMSE = "right",
-                     line.size=0.65)
+                     line.size=line.size)
 
 
 

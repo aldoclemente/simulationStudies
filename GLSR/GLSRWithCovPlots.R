@@ -146,13 +146,13 @@ GLRWithCovPlots<-function(imgfile,
   
   firstCov <- R_plot_graph.ggplot2.2(FEM(W[,1], FEMbasis),
                                      line.size = line.size,
-                                     title = bquote(N(0.5, 0.25^2)), #"First Covariate", #expression(hat(f) ~ paste("(n=",n_data[1],")",sep="")),
+                                     title = bquote(X[{1}[i]]), #"First Covariate", #expression(hat(f) ~ paste("(n=",n_data[1],")",sep="")),
                                 
                                      palette=p,
                                      legend.pos = "right")
   secondCov <- R_plot_graph.ggplot2.2(FEM(W[,2], FEMbasis),
                                       line.size = line.size,
-                                      title = "sinusoidal function", # second covariate
+                                      title = bquote(X[{2}]), # second covariate
                                     
                                       palette=p,
                                       legend.pos = "right")
@@ -164,15 +164,15 @@ GLRWithCovPlots<-function(imgfile,
                                            points_ = points_, 
                                            mu = W[sample_,1],
                                            palette=p,
-                                           title = paste("First Covariate",
-                                                         "(n=",n_data[1],")",sep=""))
+                                           line.size=line.size,
+                                           title = bquote(X[{1}[i]]))
   
   secondCov.example.1 <- R_plot_mesh.ggplot(mesh = FEMbasis$mesh,
                                             points_ = points_, 
                                             mu = W[sample_,2],
                                             palette = p,
-                                            title = paste("Second Covariate",
-                                                          "(n=",n_data[1],")",sep=""))
+                                            line.size=line.size,
+                                            title = bquote(X[{2}[i]]))
   
   nnodes = nrow(FEMbasis$mesh$nodes)
   sample_ = sample(1:nnodes, n_data[2])
@@ -180,16 +180,14 @@ GLRWithCovPlots<-function(imgfile,
   firstCov.example.2 <- R_plot_mesh.ggplot(mesh = FEMbasis$mesh,
                                            points_ = points_, 
                                            mu = W[sample_,1], 
-                                           palette=p,
-                                           title = paste("First Covariate",
-                                                         "(n=",n_data[2],")",sep=""))
+                                           palette=p, line.size=line.size,
+                                           title = bquote(X[{1}[i]]))
   
   secondCov.example.2 <- R_plot_mesh.ggplot(mesh = FEMbasis$mesh,
                                             points_ = points_, 
                                             mu = W[sample_,2],
-                                            palette=p,
-                                            title = paste("Second Covariate",
-                                                          "(n=",n_data[2],")",sep=""))
+                                            palette=p, line.size=line.size,
+                                            title = bquote(X[{2}[i]]))
   
   nnodes = nrow(FEMbasis$mesh$nodes)
   sample_ = sample(1:nnodes, n_data[3])
@@ -197,16 +195,14 @@ GLRWithCovPlots<-function(imgfile,
   firstCov.example.3 <- R_plot_mesh.ggplot(mesh = FEMbasis$mesh,
                                            points_ = points_, 
                                            mu = W[sample_,1], 
-                                           palette=p,
-                                           title = paste("First Covariate",
-                                                         "(n=",n_data[3],")",sep=""))
+                                           palette=p, line.size=line.size,
+                                           title = bquote(X[{1}[i]]))
   
   secondCov.example.3 <- R_plot_mesh.ggplot(mesh = FEMbasis$mesh,
                                             points_ = points_, 
                                             mu = W[sample_,2],
-                                            palette=p,
-                                            title = paste("Second Covariate",
-                                                          "(n=",n_data[3],")",sep=""))
+                                            palette=p, line.size=line.size,
+                                            title = bquote(X[{2}[i]]))
   
   nnodes = nrow(FEMbasis$mesh$nodes)
   sample_ = sample(1:nnodes, n_data[4])
@@ -214,16 +210,14 @@ GLRWithCovPlots<-function(imgfile,
   firstCov.example.4 <- R_plot_mesh.ggplot(mesh = FEMbasis$mesh,
                                            points_ = points_, 
                                            mu = W[sample_,1], 
-                                           palette=p,
-                                           title = paste("First Covariate",
-                                                         "(n=",n_data[4],")",sep=""))
+                                           palette=p, line.size=line.size,
+                                           title = bquote(X[{1}[i]]))
   
   secondCov.example.4 <- R_plot_mesh.ggplot(mesh = FEMbasis$mesh,
                                             points_ = points_, 
                                             mu = W[sample_,2],
-                                            palette=p,
-                                            title = paste("Second Covariate",
-                                                          "(n=",n_data[4],")",sep=""))
+                                            palette=p, line.size=line.size,
+                                            title = bquote(X[{2}[i]]))
   
   
   

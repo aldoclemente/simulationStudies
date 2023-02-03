@@ -4,8 +4,6 @@
 #############   Post - Processing    ############
 #################################################
 
-#load("data/test/DE_test1_RMSE_2022-08-25-15_45_45.RData")
-
 folder.imgs = paste(folder.name,"img/",sep="")
 if(!dir.exists(folder.imgs)) {
   dir.create(folder.imgs)
@@ -33,7 +31,8 @@ print(boxplot_RMSE(RMSE,
              title="RMSE"))
 dev.off()
 
-pdf(paste(folder.imgs,"estimates",".pdf",sep=""))
+line.size = 1.
+pdf(paste(folder.imgs,"estimates-",line.size,".pdf",sep=""))
 estimates = list()
 estimates[[1]] = FEM(DE_PDE.FEM, FEMbasis)
 estimates[[2]] = FEM(KDE_PDE.FEM, FEMbasis)
@@ -47,7 +46,7 @@ PLOTS <- plot_estimates(estimates,
                         methods.names = methods.names,
                         true.density.main = "Density",
                         palette="viridis",
-                        line.size = 0.75)
+                        line.size = line.size)
 
 print(PLOTS$density.plot)
 for(i in 1:length(estimates)){
@@ -60,7 +59,7 @@ PLOTS <- plot_estimates(estimates,
                         methods.names = methods.names,
                         true.density.main = "Density",
                         palette="magma",
-                        line.size = 0.75)
+                        line.size = line.size)
 print(PLOTS$density.plot)
 for(i in 1:length(estimates)){
   if(methods[i])  print(PLOTS$estimates.plot[[i]])
@@ -71,7 +70,7 @@ PLOTS <- plot_estimates(estimates,
                         methods = methods,
                         methods.names = methods.names,
                         true.density.main = "Density",
-                        line.size = 0.75)
+                        line.size = line.size)
 
 print(PLOTS$density.plot)
 for(i in 1:length(estimates)){
@@ -101,7 +100,7 @@ PLOTS <- plot_estimates(estimates,
                         methods.names = methods.names,
                         true.density.main = "Density",
                         palette="inferno",
-                        line.size = 0.75)
+                        line.size = line.size)
 
 print(PLOTS$density.plot)
 for(i in 1:length(estimates)){

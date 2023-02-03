@@ -7,10 +7,11 @@ setwd("DensityEstimation/")
 
 graphics.off()
 rm(list=ls())
-
+library(fdaPDE)
 source("../utils.R")
+source("../settings.R")
 source("setting.R")
-
+source("utils.R")
 nsim =  30 #30
 ntest = 1
 domains = c("simplenet", "ontario")
@@ -21,7 +22,7 @@ domains = c("simplenet", "ontario")
 # methods[4] -> KDE-2D
 # methods[5] -> VORONOI  (slow !)
 
-methods = c(T,F,F,T,F) # mask
+methods = c(T,T,F,T,T) # mask
 methods.names = c("DE-PDE", "KDE-PDE", "KDE-ES", "KDE-2D", "VORONOI")
 tests.names = c("test_1", "test_2")
  
@@ -81,7 +82,7 @@ if(!dir.exists(folder.name)) {
 
 
 if(ntest==1)lambda = 10^seq(from=-4, to=-3,length.out = 20)
-if(ntest==2)lambda = 10^seq(from=-8, to=-5,length.out = 20)
+if(ntest==2)lambda = 10^seq(from=-6, to=-3,length.out = 20)
 
 
 for(j in 1:length(n)){

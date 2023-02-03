@@ -54,10 +54,6 @@ RegressionNoCovPlots<-function(imgfile,
                          title = bquote(f),
                          palette=p,
                          legend.pos = "right")
-  
-  rmse <- boxplot_RMSE(RMSE, n_data, model_ = c(T,T,T,T), 
-                       names_ = c("SR-PDE","GWR","Lattice","RR-Krig"),
-                       legend.pos = legend.pos.RMSE, palette=palette)
 
   mean.spatial.field.1 <- R_plot_graph.ggplot2.2(FEM(mean.field.fdaPDE[,1], FEMbasis),
                                            line.size = line.size,
@@ -102,7 +98,7 @@ RegressionNoCovPlots<-function(imgfile,
                                                color.max = max.col,
                                                line.size=line.size,
                                                palette=p,
-                                               title = bquote(z[i] == f(bold(p)[i]) + epsilon[i] )) #bold(w)[i]^T * bold(beta)
+                                               title = bquote(y[i] == f(bold(p)[i]) + epsilon[i] )) #bold(w)[i]^T * bold(beta)
                                                  
                                                  # paste("Sample ",
                                                       #      "(n=",n_data[1],")",sep=""))
@@ -117,7 +113,7 @@ RegressionNoCovPlots<-function(imgfile,
                                                color.max = max.col,
                                                line.size=line.size,
                                                palette=p,
-                                               title = bquote(z[i] == f(bold(p)[i]) + epsilon[i]) ) 
+                                               title = bquote(y[i] == f(bold(p)[i]) + epsilon[i]) ) 
                                                  #paste("Sample ",
                                                       #      "(n=",n_data[2],")",sep=""))
   
@@ -131,7 +127,7 @@ RegressionNoCovPlots<-function(imgfile,
                                                color.max = max.col,
                                                line.size=line.size,
                                                palette=p,
-                                               title = bquote(z[i] == f(bold(p)[i]) + epsilon[i]) )
+                                               title = bquote(y[i] == f(bold(p)[i]) + epsilon[i]) )
                                                  # paste("Sample ",
                                                       #      "(n=",n_data[3],")",sep=""))
   
@@ -145,14 +141,14 @@ RegressionNoCovPlots<-function(imgfile,
                                                color.max = max.col,
                                                line.size=line.size,
                                                palette=p,
-                                               title = bquote(z[i] == f(bold(p)[i]) + epsilon[i]) ) 
+                                               title = bquote(y[i] == f(bold(p)[i]) + epsilon[i]) ) 
                                                  #paste("Sample ",
                                                       #      "(n=",n_data[4],")",sep=""))
   
   
   pdf(imgfile)
   print(true.spatial.field)
-  print(rmse)
+  
   print(mean.spatial.field.1)
   print(mean.spatial.field.2)
   print(mean.spatial.field.3)

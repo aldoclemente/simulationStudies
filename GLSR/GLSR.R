@@ -5,7 +5,7 @@
 ############################
 
 setwd("../GLSR")
-library(plotrix)
+
 library(purrr)
 library(fdaPDE)
 source("../utils.R")
@@ -148,6 +148,7 @@ save(RMSE,
      estimates,
      W,
      betas, 
+     foldername_,
      file = paste(foldername_, "data.RData",sep=""))
 
 palette = "magma" # "viridis" "magma
@@ -155,17 +156,22 @@ imgfile_ = paste(foldername_,"imgs.pdf",sep="")
 
 if(palette == "ggplot")
   palette=NULL
-if(is.null(W)){ 
-source("GLRNoCovPlots.R")
-GLRNoCovPlots(imgfile,
-             field=param, line.size.field = 0.5,    
-             response, 
-             RMSE,legend.pos.RMSE = c(0.85, 0.85))
-}else{
+
 # # # img with cov # # # 
+foldername_ = "data/test-2/2023-02-01-18_18_38/"
+load("data/test-2/2023-02-01-18_18_38/data.RData")
+source("../SpatialRegression-NoCovariate/NoCovariatesCore.R")
+library(fdaPDE)
+library(plotrix)
 source("GLSRWithCovPlots.R") 
 palette = "viridis"
-GLRWithCovPlots(imgfile=imgfile_,
+
+imgfolder_ = paste(foldername_,"imgs/",sep="")
+if(!dir.exists(imgfolder_))
+  dir.create(imgfolder_)
+
+line.size = 1.
+GLRWithCovPlots(imgfile=paste(imgfolder_,"estimates-",line.size,".pdf",sep=""),
               true.field=field,
               true.signal = signal,
               mean.field.fdaPDE = mean.field.fdaPDE,
@@ -176,35 +182,12 @@ GLRWithCovPlots(imgfile=imgfile_,
               W=W, betas=betas,
               RMSE,legend.pos.RMSE = "right",
               palette=palette,
-              line.size = 0.5)
-}
-
-source("../SpatialRegression-Covariates/RegressionWithCovPlots.R")
-
-palette = "viridis" # "viridis" "magma
-imgfile_ = paste("img/GLSR-",palette,".pdf",sep="")
-
-if(palette == "ggplot")
-  palette=NULL
-
-RegressionWithCovPlots(imgfile="img/prova.pdf",
-                true.field=field,
-                true.signal = signal,
-                mean.field.fdaPDE = mean.field.fdaPDE,
-                #param = param,
-                observations = response,
-                FEMbasis = FEMbasis,
-                n_data = n_data,
-                W=W, betas=betas,
-                RMSE,legend.pos.RMSE = "right",
-                palette=palette,
-                line.size = 0.65)
+              line.size = line.size)
 
 colors = viridis(n=2, begin=0.95, end=0.25)
-pdf(paste(foldername_,"RMSE-GSR.pdf",sep=""))
+pdf(paste(imgfolder_,"RMSE.pdf",sep=""))
 boxplot_RMSE(RMSE, n_data, model_ = c(T,T,F,F), 
              names_ = c("SR-PDE","GWR","",""),
              legend.pos = c(0.825,0.8625), palette=palette,
              colors=colors)
 dev.off()
-
