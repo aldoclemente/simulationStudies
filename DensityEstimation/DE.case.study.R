@@ -75,7 +75,7 @@ for(i in 1:K){
 
   # DE-PDE 
   #lambda = 10^seq(from=4.45, to=4.75,length.out = 20)
-  lambda = 10^seq(from=-3.5, to=-2.5,length.out = 20)
+  lambda = 10^seq(from=-6, to=-3,length.out = 30)
   DE_PDE = fdaPDE::DE.FEM(data = cbind(train_data$x, train_data$y), FEMbasis = FEMbasis,
                           lambda = lambda,
                           preprocess_method ="RightCV",
@@ -109,8 +109,6 @@ for(i in 1:K){
                             R0 = Mass, data.k = test_data)
   
 }
-
-date_ = gsub(":","_",gsub(" ","-",Sys.time()))
 
 save(CV_errors, date_, folder.name,
      file = paste(folder.name, "CV_error.RData", sep=""))
@@ -150,5 +148,5 @@ save(DE_PDE.FEM, KDE_PDE.FEM, KDE_2D.FEM, KDE_VORONOI.FEM,
      file = paste(folder.name,"estimates.RData",sep=""))
 
 source("DE.case.study.post.processing.R")
-
+ 
 

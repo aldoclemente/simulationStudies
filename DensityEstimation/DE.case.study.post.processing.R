@@ -89,7 +89,7 @@ plot_estimates <-function(estimates, # list of estimates
   num_edges= dim(mesh$edges)[1]
   coef=matrix(0, nrow= num_edges, ncol=length(estimates) )
 
-  for(i in 1:length(estimates)){
+  for(i in 1:(length(estimates)-1)){
   for(e in 1:num_edges){
     
     coef[e,i]= (estimates[[i]]$coeff[mesh$edges[e,1]] + estimates[[i]]$coeff[mesh$edges[e,2]])/2  
@@ -102,7 +102,7 @@ plot_estimates <-function(estimates, # list of estimates
   
   estimates.plot = list()
   
-  for(i in 1:length(estimates)){
+  for(i in 1:(length(estimates)-1)){
     
     estimates.plot[[i]] = R_plot_graph.ggplot2.2( estimates[[i]], # FEM object
                                                  line.size = line.size,
@@ -113,6 +113,12 @@ plot_estimates <-function(estimates, # list of estimates
                                                  legend.pos = "right")
     
   }
+
+  estimates.plot[[length(estimates)]] = R_plot_graph.ggplot2.2( estimates[[length(estimates)]], # FEM object
+                                                 line.size = line.size,
+                                                title = titles[[length(estimates)]],
+                                                 palette=palette,
+                                                 legend.pos = "right")
   
   return(estimates.plot)
   
@@ -123,10 +129,10 @@ if(!dir.exists(folder.imgs)) {
   dir.create(folder.imgs)
 }
 
-date_ = "2023-01-25-16_20_21"
-folder.name = paste("data/chicago/", date_,"/",sep="")
-load(paste(folder.name, "CV_error.RData",sep=""))
-load(paste(folder.name, "estimates.RData",sep=""))
+# date_ = "2023-01-25-16_20_21"
+# folder.name = paste("data/chicago/", date_,"/",sep="")
+# load(paste(folder.name, "CV_error.RData",sep=""))
+# load(paste(folder.name, "estimates.RData",sep=""))
 
 pdf(paste(folder.imgs,"CV_error.pdf", sep=""))
 methods = c(T,T,F,T,T)
@@ -136,7 +142,8 @@ boxplot_CV_error(CV_errors = CV_errors,
                  methods.names = methods.names)
 dev.off()
 
-pdf(paste(folder.imgs, "estimates.pdf",sep=""))
+line.size = 1.
+pdf(paste(folder.imgs, "estimates-",line.size,".pdf",sep=""))
 estimates = list()
 estimates[[1]] = DE_PDE.FEM
 estimates[[2]] = KDE_PDE.FEM
@@ -146,7 +153,7 @@ estimates[[4]] = KDE_VORONOI.FEM
 PLOTS <- plot_estimates(estimates, 
                         palette=viridis,
                         titles = methods.names[methods],
-                        line.size = 0.75)
+                        line.size = line.size)
 
 for(i in 1:length(estimates)){
   print(PLOTS[[i]])
@@ -155,7 +162,7 @@ for(i in 1:length(estimates)){
 PLOTS <- plot_estimates(estimates, 
                         palette=magma,
                         titles = methods.names[methods],
-                        line.size = 0.75)
+                        line.size = line.size)
 
 for(i in 1:length(estimates)){
   print(PLOTS[[i]])
@@ -163,7 +170,7 @@ for(i in 1:length(estimates)){
 
 PLOTS <- plot_estimates(estimates, 
                         titles = methods.names[methods],
-                        line.size = 0.75)
+                        line.size = line.size)
 
 for(i in 1:length(estimates)){
   print(PLOTS[[i]])
@@ -172,7 +179,7 @@ for(i in 1:length(estimates)){
 PLOTS <- plot_estimates(estimates, 
                         palette=plasma,
                         titles = methods.names[methods],
-                        line.size = 0.75)
+                        line.size = line.size)
 
 for(i in 1:length(estimates)){
   print(PLOTS[[i]])
@@ -203,7 +210,7 @@ pdf(paste(folder.imgs,"estimates_ref.pdf",sep=""))
 PLOTS <- plot_estimates(estimates, 
                         palette = viridis,
                         titles = methods.names[methods],
-                        line.size = 0.75)
+                        line.size = line.size)
 
 for(i in 1:length(estimates)){
   print(PLOTS[[i]])
@@ -212,7 +219,7 @@ for(i in 1:length(estimates)){
 PLOTS <- plot_estimates(estimates, 
                         palette = inferno,
                         titles = methods.names[methods],
-                        line.size = 0.75)
+                        line.size = line.size)
 
 for(i in 1:length(estimates)){
   print(PLOTS[[i]])
@@ -221,7 +228,7 @@ for(i in 1:length(estimates)){
 PLOTS <- plot_estimates(estimates, 
                         palette=magma,
                         titles = methods.names[methods],
-                        line.size = 0.75)
+                        line.size = line.size)
 
 for(i in 1:length(estimates)){
   print(PLOTS[[i]])
@@ -230,7 +237,7 @@ for(i in 1:length(estimates)){
 PLOTS <- plot_estimates(estimates, 
                         palette=plasma,
                         titles = methods.names[methods],
-                        line.size = 0.75)
+                        line.size = line.size)
 
 for(i in 1:length(estimates)){
   print(PLOTS[[i]])
@@ -252,7 +259,7 @@ estimates[[4]] = KDE_VORONOI.FEM
 PLOTS <- plot_estimates(estimates, 
                         palette=plasma,
                         titles = methods.names[methods],
-                        line.size = 0.75)
+                        line.size = line.size)
 
 for(i in 1:length(estimates)){
   print(PLOTS[[i]])

@@ -1,4 +1,5 @@
 rm(list=ls())
+library(fdaPDE)
 library(viridis)
 library(colorspace)
 source("../utils.R")
@@ -12,15 +13,23 @@ data(LNHP)
 
 spat.stat.linnet = maptools::as.linnet.SpatialLines(LN.nt)
 
-x.m = mean(spat.stat.linnet$vertices$x)
-y.m = mean(spat.stat.linnet$vertices$y)
+# x.m = mean(spat.stat.linnet$vertices$x)
+# y.m = mean(spat.stat.linnet$vertices$y)
 
-x.sd = sd(spat.stat.linnet$vertices$x)
-y.sd = sd(spat.stat.linnet$vertices$y)
+# x.sd = sd(spat.stat.linnet$vertices$x)
+# y.sd = sd(spat.stat.linnet$vertices$y)
 
-x.norm = (spat.stat.linnet$vertices$x - x.m)/x.sd
-y.norm = (spat.stat.linnet$vertices$y - y.m)/y.sd
+# x.norm = (spat.stat.linnet$vertices$x - x.m)/x.sd
+# y.norm = (spat.stat.linnet$vertices$y - y.m)/y.sd
 
+x.min = min(spat.stat.linnet$vertices$x)
+y.min = min(spat.stat.linnet$vertices$y)
+  
+x.max = max(spat.stat.linnet$vertices$x)
+y.max = max(spat.stat.linnet$vertices$y)
+  
+x.norm = (spat.stat.linnet$vertices$x - x.min)/(x.max-x.min)
+y.norm = (spat.stat.linnet$vertices$y - y.min)/(y.max-y.min)
 coords_ = cbind(x.norm, y.norm)
 
 Windows_ = owin(xrange=c(min(x.norm), max(x.norm)), 
@@ -35,7 +44,9 @@ locs = LN.prop@coords
 which.duplicated = which(duplicated(LN.prop@data))
 
 #locs = locs[-which.duplicated, ]
-locs = cbind( (locs[,1]-x.m)/x.sd, (locs[,2]-y.m)/y.sd)
+#locs = cbind( (locs[,1]-x.m)/x.sd, (locs[,2]-y.m)/y.sd)
+
+locs = cbind( (locs[,1]-x.min)/(x.max - x.min), (locs[,2]-y.min)/(y.max-y.min) )
 
 x11()
 plot(spat.stat.linnet)
@@ -57,7 +68,7 @@ FEMbasis = create.FEM.basis(mesh)
 dataFrame = LN.prop
 dataFrame@coords = cbind(LPP$data$x, LPP$data$y)
 dataFrame$DATA.IDX = 1:nrow(dataFrame)
-dataFrame$PURCHASE = dataFrame$PURCHASE/10^3 # k pounds
+dataFrame$PURCHASE = dataFrame$PURCHASE/10^5 # k pounds
 
 # 10-folds Cross Validation
 K = 10
