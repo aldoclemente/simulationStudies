@@ -13,17 +13,29 @@ edges = cbind( chicago$domain$from, chicago$domain$to)
 
 mesh = create.mesh.1.5D(nodes = vertices, edges = edges)
 
-mesh = normalize_mesh(mesh)
+#mesh = normalize_mesh(mesh)
+tmp = normalize_mesh_unit(mesh)
+mesh = tmp$mesh
+
 LN = as.spatstat.linnet.fdaPDE(mesh)
 
-x.m = mean(chicago$domain$vertices$x)
-y.m = mean(chicago$domain$vertices$y)
+# x.m = mean(chicago$domain$vertices$x)
+# y.m = mean(chicago$domain$vertices$y)
+# 
+# x.sd = sd(chicago$domain$vertices$x)
+# y.sd = sd(chicago$domain$vertices$y)
 
-x.sd = sd(chicago$domain$vertices$x)
-y.sd = sd(chicago$domain$vertices$y)
+# x.norm = (chicago$data$x - x.m)/x.sd
+# y.norm = (chicago$data$y - y.m)/y.sd
 
-x.norm = (chicago$data$x - x.m)/x.sd
-y.norm = (chicago$data$y - y.m)/y.sd
+x.min = tmp$x.min
+x.max = tmp$x.max
+
+y.min = tmp$y.min
+y.max = tmp$y.max
+
+x.norm = (chicago$data$x - x.min)/(x.max-x.min)
+y.norm = (chicago$data$y - y.min)/(y.max-y.min)
 
 chicago.norm = spatstat.linnet::lpp(X= ppp(x.norm, y=y.norm, 
                                         window= LN$window), 
@@ -38,7 +50,7 @@ plot(mesh, pch=".")
 points(DATA$data$x, DATA$data$y, col = "red", pch=16, cex=1.5)
 }
 ### FAMILY - poisson ###
-delta = 0.25
+delta = 0.045
 
 mesh = refine.mesh.1.5D(mesh, delta=delta)
 FEMbasis = create.FEM.basis(mesh)
@@ -46,28 +58,49 @@ FEMbasis = create.FEM.basis(mesh)
 
 #setting regions 
 nnodes = nrow(mesh$nodes)
-nregion = 16 #8 #6 #10 
+#nregion = 30 #8 #6 #10 
 nedges = nrow(mesh$edges)
 ndata = length(DATA$data$x)
-
-PP = runiflpp(n=nregion/2, L = chicago.norm$domain) 
-centroids_ = cbind(PP$data$x, PP$data$y)
-centroids_ = projection.points.1.5D(mesh=mesh, location=centroids_)
-
-# lines == true edges of the network / edges == edges of the discretized network
 data_ = cbind(DATA$data$x, DATA$data$y)
-result_ <- kmeans(x=data_, centers=nregion, iter.max = 100)
+
+#PP = runiflpp(n=nregion, L = chicago.norm$domain) 
+#centroids_ = cbind(PP$data$x, PP$data$y)
+#centroids_ = projection.points.1.5D(mesh=mesh, location=centroids_)
+# idxs = c(2, 5, 10, 20, 35, 45, 55, 60, 65, 70, 75, 80, 90, 
+#          100, 110, 114, 120, 130, 140, 143, 150, 160, 170, 180,
+#          200, 210, 215, 225, 235, 245, 250, 255, 270, 280, 285,
+#          315, 320, 330)
+set.seed(0)
+idxs= sample(1:length(DATA$domain$vertices$x), size=ceiling(length(DATA$domain$vertices$x)/15))
+centroids_ = mesh$nodes[idxs,]
+centroids_ = rbind(centroids_, mesh$nodes[c(1, 23, 119:121, 209, 211), ])
+
+result_ <- kmeans(x=data_, centers=30, iter.max = 100)
 centroids_ = rbind( centroids_, projection.points.1.5D(mesh, locations= result_$centers) )
 
 {
-x11()
-plot(mesh, pch=".")
-points(data_, col="red", pch=16, cex=2)
-points(result_$centers, col="blue", pch = 16, cex=2)
-points(centroids_, col="green4", pch=16, cex=2)
-legend("topright", legend=c("data", "2D", "1.5D"), 
-        col=c("red", "blue", "green4"), pch = 16, cex=1.25 )
+  x11()
+  plot(mesh, pch=".")
+  points(data_, col="red", pch=16, cex=2)
+  points(centroids_, col="green4", pch=16, cex=2)
+  legend("topright", legend=c("data", "centroids"),
+          col=c("red", "green4"), pch = 16, cex=1.25 )
 }
+
+
+# # lines == true edges of the network / edges == edges of the discretized network
+# result_ <- kmeans(x=data_, centers=nregion, iter.max = 100)
+# centroids_ = rbind( centroids_, projection.points.1.5D(mesh, locations= result_$centers) )
+
+# {
+# x11()
+# plot(mesh, pch=".")
+# points(data_, col="red", pch=16, cex=2)
+# points(result_$centers, col="blue", pch = 16, cex=2)
+# points(centroids_, col="green4", pch=16, cex=2)
+# legend("topright", legend=c("data", "2D", "1.5D"), 
+#         col=c("red", "blue", "green4"), pch = 16, cex=1.25 )
+# }
 
 lines_to_region <- set_region(centroids_, mesh=mesh, LN = DATA)
 
@@ -75,15 +108,11 @@ nregion = nrow(centroids_)
 
 incidence_matrix = matrix(0, nrow=nregion, ncol=nedges)
 
-# for(i in 1:nrow(new_to_old)){
-#   incidence_matrix[ lines_to_region[new_to_old[i]],i] = 1
-# }
-
 for(i in 1:nedges){
    incidence_matrix[ lines_to_region[i],i] = 1
 }
 
-mask_= matrix(0, nrow=nregion, ncol=1)
+mask_= rep(0, times=nregion)
 for( i in 1:nregion){
   if( !sum(incidence_matrix[i,])){
     mask_[i] = 1
@@ -92,10 +121,10 @@ for( i in 1:nregion){
 }
 
 if( sum(mask_)){
-  incidence_matrix = incidence_matrix[-mask_,]
+  incidence_matrix = incidence_matrix[-which(mask_==1),]
   nregion = nregion - sum(mask_)
-  centroids_ = centroids_[-mask_,]
-  lines_to_region <- set_region(centroids_, mesh=mesh, LN = PP)
+  centroids_ = centroids_[-which(mask_==1),]
+  lines_to_region <- set_region(centroids_, mesh=mesh, LN = DATA)
 }
 
 
@@ -108,9 +137,21 @@ range(response)
 
 {
 x11()
-plot_region(lines_to_region, response, LN=DATA,mesh=mesh)
+plot_region(lines_to_region, response, LN=DATA,mesh=mesh, nregion = 1)
 }
-lambda_GSR = 10^seq(from=-2,to=1,length.out=250)
+
+{ pdf("regions.pdf")
+  for(i in 1:nregion)
+    plot_region(lines_to_region, response, LN=DATA, mesh=mesh, nregion = i)
+  dev.off()
+}
+
+{
+  x11()
+  plot_region_gradient_color(mesh, response, lines_to_region, line.size = 1.5)
+}
+
+lambda_GSR = 10^seq(from=-5,to=-1,length.out=40)
 
 GSR_PDE <- smooth.FEM(observations = response,
                          covariates = NULL,
@@ -134,7 +175,7 @@ coeff_ <- coeff_ / sum( Mass%*% coeff_ )
 plot(FEM(coeff_, FEMbasis))
 range(coeff_)
 
-lambda_DE = 10^seq(from=-3.5, to=-2.5,length.out = 20)
+lambda_DE = 10^seq(from=-5, to=-2.5,length.out = 20)
 DE_PDE = fdaPDE::DE.FEM(data = cbind(DATA$data$x, DATA$data$y), FEMbasis = FEMbasis,
                         lambda = lambda_DE,
                         preprocess_method ="RightCV",
@@ -341,7 +382,8 @@ dev.off()
 }
 
 {
-pdf(paste(folder.imgs, "estimates_2.pdf",sep=""))
+line.size = 1.
+pdf(paste(folder.imgs, "estimates.pdf",sep=""))
 
 estimates = list()
 estimates[[1]] = DE_PDE.FEM
@@ -368,7 +410,7 @@ for(i in 1:length(estimates))
                                           title = methods.names[i],
                                           color.min = min.col,
                                           color.max = max.col,
-                                           palette=viridis)
+                                           palette=viridis, line.size = line.size)
     
 }
 
@@ -382,7 +424,7 @@ for(i in 1:length(estimates)){
                                           title = methods.names[[i]],
                                           color.min = min.col,
                                           color.max = max.col,
-                                          palette=magma)
+                                          palette=magma, line.size = line.size)
     
 }
 for(i in 1:length(estimates)){
@@ -396,7 +438,7 @@ for(i in 1:length(estimates)){
                                           title = methods.names[[i]],
                                           color.min = min.col,
                                           color.max = max.col,
-                                          palette=jet.col)
+                                          palette=jet.col, line.size = line.size)
     
 }
 for(i in 1:length(estimates)){
@@ -411,7 +453,7 @@ estimates = list()
 estimates[[1]] = DE_PDE.FEM
 estimates[[2]] = GSR_PDE.FEM
 
-mesh.ref = refine.mesh.1.5D(DE_PDE.FEM$FEMbasis$mesh, delta = 0.125)
+mesh.ref = refine.mesh.1.5D(DE_PDE.FEM$FEMbasis$mesh, delta = 0.0125)
 FEMbasis.ref = create.FEM.basis(mesh.ref)
 locs = mesh.ref$nodes
 
@@ -434,7 +476,7 @@ for(i in 1:length(estimates))
                        FEMbasis.ref)
 
 {
-pdf(paste(folder.imgs, "estimates_ref_2.pdf",sep=""))
+pdf(paste(folder.imgs, "estimates_ref.pdf",sep=""))
 PLOTS = list()
 for(i in 1:length(estimates))
 {
@@ -442,7 +484,7 @@ for(i in 1:length(estimates))
                                           title = methods.names[i],
                                           color.min = min.col,
                                           color.max = max.col,
-                                          palette=viridis)
+                                          palette=viridis, line.size = line.size)
     
 }
 
@@ -456,7 +498,7 @@ for(i in 1:length(estimates)){
                                           title = methods.names[[i]],
                                           color.min = min.col,
                                           color.max = max.col,
-                                          palette=magma)
+                                          palette=magma, line.size = line.size)
     
 }
 for(i in 1:length(estimates)){
@@ -470,7 +512,7 @@ for(i in 1:length(estimates)){
                                           title = methods.names[[i]],
                                           color.min = min.col,
                                           color.max = max.col,
-                                          palette=jet.col)
+                                          palette=jet.col, line.size = line.size)
     
 }
 for(i in 1:length(estimates)){

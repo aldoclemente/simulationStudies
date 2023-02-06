@@ -148,7 +148,13 @@ set_region <- function(centroids_, mesh, LN = chicago){
     network_dist = spatstat.linnet::crossdist.lpp(lpp_midpoints, lpp_centroids)
     edges_to_region = matrix(0, nrow = nedges, ncol=1)
 
-    for(e in 1:nedges) edges_to_region[e] = which( network_dist[e,] == min(network_dist[e,]) )
+    for(e in 1:nedges){
+      idxs = which( network_dist[e,] == min(network_dist[e,]))
+      if(length(idxs) == 1) 
+        edges_to_region[e] = idxs
+      else
+        edges_to_region[e] = idxs[sample(1:length(idxs), size=1)]
+    }
 
     return(edges_to_region)
 }
@@ -157,24 +163,101 @@ plot_region <-function(lines_to_region,
                        response,
                        LN = chicago, 
                        mesh = fdaPDE::create.mesh.1.5D(nodes=cbind(LN$domain$vertices$x, LN$domain$vertices$y),
-                                                       edges=cbind(LN$domain$from, LN$domain$to))){
-   nregion = max(lines_to_region)
+                                                       edges=cbind(LN$domain$from, LN$domain$to)),
+                       nregion = NULL){
+  
    set.seed(NULL)
    set.seed(314156)
-   colors_ = jet.col(nregion)
-   colors_ = sample(colors_, nregion)
+   
+   if(is.null(nregion)){
+    nregion = max(lines_to_region)
+    colors_ = jet.col(nregion)
+    colors_ = sample(colors_, nregion)
 
-   nedges = nrow(mesh$edges)
-   plot(mesh, pch=".")
-   for(e in 1:nregion){
-    mask_ = which(lines_to_region == e)
-    segments(mesh$nodes[mesh$edges[mask_,1],1], mesh$nodes[mesh$edges[mask_,1],2],
+    nedges = nrow(mesh$edges)
+    plot(mesh, pch=".")
+    for(e in 1:nregion){
+      mask_ = which(lines_to_region == e)
+      segments(mesh$nodes[mesh$edges[mask_,1],1], mesh$nodes[mesh$edges[mask_,1],2],
              mesh$nodes[mesh$edges[mask_,2],1],  mesh$nodes[mesh$edges[mask_,2],2],
              col = colors_[e], lwd=4.5)
 
+    }
+    legend("topright", legend=response, col=colors_, lwd=7)
+    }else{
+      colors_ = jet.col(nregion)
+      colors_ = sample(colors_, nregion)
+    
+      nedges = nrow(mesh$edges)
+      plot(mesh, pch=".")
+      mask_ = which(lines_to_region == nregion)
+      segments(mesh$nodes[mesh$edges[mask_,1],1], mesh$nodes[mesh$edges[mask_,1],2],
+               mesh$nodes[mesh$edges[mask_,2],1],  mesh$nodes[mesh$edges[mask_,2],2],
+               col = "red", lwd=4.5)
+      legend("topright", legend=response[nregion], col="red", lwd=7)
+      
+    }
+}
+
+plot_region_gradient_color <- function(mesh,
+                                       response,
+                                       lines_to_region,
+                                       palette = jet.col,
+                                       line.size= 1,
+                                       title.size = 26){
+  
+  x=vector(mode="double")
+  y=vector(mode="double")
+  grp.nodes=vector(mode="integer")
+  
+  num_edges= dim(mesh$edges)[1]
+  for(e in 1:num_edges){
+    x = append(x, c(mesh$nodes[ mesh$edges[e,1], 1], mesh$nodes[ mesh$edges[e,2], 1]))
+    y = append(y, c(mesh$nodes[ mesh$edges[e,1], 2], mesh$nodes[ mesh$edges[e,2], 2]))
+    grp.nodes = append(grp.nodes, rep(e,times=2))
   }
-  legend("topright", legend=response, col=colors_, lwd=7)
-                                                      
+  
+  MyTheme <- theme(
+    axis.text = element_text(size=(title.size-2)),
+    axis.title = element_text(size=title.size),
+    title = element_text(size=title.size),
+    legend.text = element_text(size=(title.size-6)),
+    legend.key.size = unit(1,"cm"),
+    legend.position = "right")
+  
+  num.col = diff(range(response))
+  p = palette(n=num.col)
+  color.min=min(response) 
+  color.max=max(response)
+  
+  mu = vector(mode="double", length= length(lines_to_region)*2)
+  for(i in 1:length(lines_to_region)){
+    mu[(2*i-1)] = response[lines_to_region[i]]
+    mu[(2*i)] = response[lines_to_region[i]]
+  }
+  
+  ratio = diff(range(mesh$nodes[,1]))/diff(range(mesh$nodes[,2]))
+  
+  data=data.frame(x,y,grp.nodes)
+  
+  ggplot(data=NULL) + 
+    geom_point(data=data, aes(x=x,y=y,group=grp.nodes), 
+               alpha=0.0) + 
+    geom_line(data=data, aes(x=x,y=y,group=grp.nodes, color= mu), 
+              size=line.size) +
+    labs(x="",y="",color="") + 
+    scale_color_gradientn(colours=p, limits = c(color.min, color.max))+ 
+    coord_fixed(ratio=ratio) + 
+    theme_void() +
+    MyTheme +   
+    theme(plot.title = element_text(hjust=0.5),
+          legend.title = element_blank(),
+          axis.title = element_blank(),
+          axis.text.x=element_blank(),
+          axis.text.y=element_blank(),
+          legend.key.size = unit(1,"cm"),
+          legend.key.width = unit(0.5,"cm"))
+  
 }
 
 plot_nodes<-function(mesh){
