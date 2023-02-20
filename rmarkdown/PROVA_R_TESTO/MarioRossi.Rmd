@@ -1,0 +1,267 @@
+---
+title: "ESAME DI STATISTICA - ING. MATEMATICA"
+subtitle: "Prova di laboratorio R"
+author: "Mario Rossi - 31415926" 
+date: "05/07/2022"
+output: 
+  pdf_document:
+    number_sections: false
+    fig_caption: true
+    highlight: tango
+
+urlcolor: blue
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, fig.width= 5, 
+                                   fig.height= 3.5, 
+                                   fig.align= "center")
+```
+
+L'abalone e' un mollusco pregiato, dotato di una sola conchiglia e diffuso in varie aree del globo. Sono stati raccolti 200 esemplari attorno ad alcune isole dello stretto di Bass, che separa l'Australia dalla Tasmania, registrandone il sesso (M=Maschio, F=Femmina o I=Infante), la lunghezza della conchiglia (ovvero la misura maggiore) in mm, il diametro in mm e l'altezza in mm. Questi dati sono riportati nel file abalone4.csv
+Rispondete alle seguenti domande, riportando il codice R, le immagini dei plot ove richiesti e commentando i risultati ottenuti
+
+# Punto 0
+
+Importare il dataset.
+
+```{r}
+dati = read.csv("abalone4.csv")
+
+head(dati)
+
+colnames(dati)
+dim(dati)
+n=dim(dati)[1]
+attach(dati)
+```
+
+# Punto 1
+
+Calcolare le frequenze assolute e relative e la moda delle variabili categoriche e descrivere queste variabili con uno o piu' grafici opportuni. -->
+
+```{r}
+
+#frequenze assolute
+freq.assolute = table(Sex)
+freq.assolute
+
+#frequenza relative
+freq.relative = prop.table(table(Sex))
+freq.relative
+
+#la moda e' I
+freq.assolute[freq.assolute==max(freq.assolute)]
+```
+
+```{r}
+pie(freq.assolute, col=c('cyan', 'coral', 'chartreuse'), main = 'Sex')
+
+barplot(freq.assolute, col=c('cyan', 'coral', 'chartreuse'), main = 'Sex')
+
+```
+
+# Punto 2
+
+Calcolare media, mediana, quartili, minimo, massimo, 10° percentile e 90° percentile delle variabili numeriche.
+
+```{r}
+summary(Length)
+quantile(Length, c(0.10, 0.90), type=2)
+
+
+summary(Height)
+quantile(Height, c(0.10, 0.90), type=2)
+
+
+summary(Diameter)
+quantile(Diameter, c(0.10, 0.90), type=2)
+
+```
+
+
+# Punto 3
+
+Verificare graficamente e numericamente la correlazione tra le variabili Length e Height.
+```{r}
+plot(Length, Height, pch=20, col='blue')
+
+cor(Length, Height)
+
+```
+
+
+# Punto 4
+
+Analizzare gli scatter plot tra tutte le coppie di variabili numeriche, colorando i punti in base al sesso.
+
+```{r}
+colors = rep('cyan', n)
+colors[Sex=='I'] = 'coral'
+colors[Sex=='M'] = 'chartreuse'
+dati.numerici = dati[,-1]
+
+pairs(dati.numerici, col=colors, pch=20)
+
+```
+
+
+# Punto 5
+
+Analizzare la distribuzione della variabile Height con gli strumenti grafici piu' opportuni, sia globale sia rispetto ai diversi valori della variabile Sex.
+
+```{r}
+hist(Height)
+#Distribuzione unimodale, con una leggera asimmetria negativa
+```
+
+```{r, fig.width=7, fig.height=5.5}
+par(mfrow=c(3,1))
+hist(Height[Sex=='I'], col='cyan')
+hist(Height[Sex=='F'], col='coral')
+hist(Height[Sex=='M'], col='chartreuse')
+```
+
+```{r}
+boxplot(Height~Sex, col=c('cyan', 'coral', 'chartreuse'))
+
+```
+
+# Punto 6
+
+Verificare se è possibile affermare che la varianza della variabile Height e' maggiore di 52 a un livello di significativita' del 5%.
+
+```{r}
+qqnorm(Height)
+qqline(Height,lwd=2,col='red')
+```
+
+```{r}
+shapiro.test(dati$Height)
+
+#il p-value dello shapiro test è alto e anche il qqplot mostra 
+#un andamento normale
+#procediamo quindi con il test chi-quadro
+
+
+alpha = 0.05
+sigma2_0 = 52
+library(EnvStats)
+res = varTest(Height, alternative="greater", conf.level = 1-alpha, 
+              sigma.squared = sigma2_0)
+
+res$p.value
+#al 5% non possiamo affermare che la varianza è maggiore di 52
+
+```
+
+
+# Punto 7
+
+Testare se e' possibile affermare che i maschi (M) e le femmine (F) hanno altezze diverse. Assumere uguali varianze tra i due gruppi.
+
+```{r}
+height.m = Height[Sex=='M']
+height.f = Height[Sex=='F']
+```
+
+```{r}
+#Verifichiamo la normalita' dei due gruppi
+qqnorm(height.f)
+qqline(height.f, lwd=2, col='red')
+```
+
+```{r}
+qqnorm(height.m)
+qqline(height.m, lwd=2, col='red')
+```
+
+```{r}
+shapiro.test(height.f)
+shapiro.test(height.m)
+
+#l'assunzione di normalita' e' ragionevole, visti i p-value dello shapiro test
+#e i qqplot
+
+#var.test(height.m, height.f, alternative = "two.sided", ratio = 1)
+#(Il test di confronto delle varianze ha pvalue 0.15, quindi l'assunzione di 
+#uguaglianza delle varianze fatta nel testo e' ragionevole)
+
+res = t.test(height.m, height.f, alternative = "two.sided", mu = 0, 
+             paired = FALSE, var.equal = TRUE, conf.level = 1 - alpha)
+res$p.value
+```
+dato il valore del p-value (0.50), non è possibile affermare che i due gruppi abbiano medie differenti
+
+# Punto 8
+
+Calcolare un intervallo di confidenza bilatero al 99% per la differenza delle medie tra i gruppi M e I (altezza_maschi - altezza_infanti). \
+
+verifichiamo la normalita' del gruppo I (quella del gruppo M e' gia' stata verificata al punto precedente)
+```{r}
+height.I = Height[Sex=='I']
+qqnorm(height.I)
+qqline(height.I, lwd=2, col='red')
+```
+
+```{r}
+shapiro.test(height.I)
+
+# Dato il p-value dello shapiro test, possiamo assumere la normalita'
+
+alpha = 0.01
+res = t.test(height.m, height.I, alternative = "two.sided", 
+             conf.level = 1 - alpha, mu = 0, var.equal = TRUE, paired = FALSE)
+res$conf.int
+
+#(5.638539, 11.447999) e' l'IC bilatero al 99% per la differenza h.M - h.I
+
+```
+
+
+# Punto 9 
+
+Calcolare la potenza del test del punto 7) via MC, per una differenza delle medie mu.M - mu.F = 2, usando 1000 iterazioni. Generare i campioni normali con la stessa numerosita' n=200 e la stessa deviazione standard = 6 per entrambi i gruppi.
+
+```{r}
+M = 1000
+n = 200
+dev.std = 6
+alpha = 0.05
+esito = rep(0, M)
+for(i in 1:M){
+  m = rnorm(n, mean=2, sd=dev.std)
+  f = rnorm(n, mean=0, sd=dev.std)
+  res = t.test(m, f, alternative = "two.sided", mu = 0, paired = FALSE,
+               var.equal = TRUE, conf.level = 1 - alpha)
+  if(res$p.value < alpha)
+    esito[i] = 1
+}
+power = mean(esito)
+power
+#La potenza stimata e' di 0.91, elevata
+```
+
+# Punto 10
+
+Mostrare la curva di potenza del test del punto 7) al variare della differenza delle medie tra -10 e +10; usare ancora MC per il calcolo della potenza, in modo analogo al punto 9, calcolandola con un passo di 0.2 per la differenza delle medie.
+
+```{r}
+valori = seq(-10, 10, 0.2)
+n.valori = length(valori)
+power = rep(0, n.valori)
+for(j in 1:n.valori){
+  esito = rep(0, M)
+  for(i in 1:M){
+    m = rnorm(n, mean=valori[j], sd=dev.std)
+    f = rnorm(n, mean=0, sd=dev.std)
+    res = t.test(m, f, alternative = "two.sided", mu = 0, paired = FALSE, 
+                 var.equal = TRUE, conf.level = 1 - alpha)
+    if(res$p.value < alpha)
+      esito[i] = 1
+  }
+  power[j] = mean(esito)
+}
+
+plot(valori, power, type='l', col='blue')
+```

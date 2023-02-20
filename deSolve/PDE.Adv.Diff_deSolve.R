@@ -26,12 +26,12 @@ exact_solution <- function(points){
 
 # Diffusion > 0 if check = T
 forcing <- function(points){
-  return(-gamma_ * sin(pi * points[,2])) 
+  return(gamma_ * sin(pi * points[,2])) 
 }
 
 N = 4*c(5,10,20,40) #,50) # int. nodes N[i]^2
 
-Dy    <- Dx <- 1.   # diffusion coeff, X- and Y-direction
+Dy    <- Dx <- -1.   # diffusion coeff, X- and Y-direction
 errors.l2 <- rep(0, times = length(N))
 h <- rep(0, times = length(N))
 
@@ -43,7 +43,7 @@ grid2D    <- setup.grid.2D(x.grid, y.grid)
 h[i] = max(grid2D$dx, grid2D$dy)
 
 D.grid    <- setup.prop.2D(value = Dx, y.value = Dy, grid = grid2D)
-v.grid    <- setup.prop.2D(value = -alpha_, y.value=0., grid = grid2D) # on the x direction "minus alpha". the "minus"is embedded into the model...
+v.grid    <- setup.prop.2D(value = +alpha_, y.value=0., grid = grid2D) # on the x direction "minus alpha". the "minus"is embedded into the model...
 A.grid    <- setup.prop.2D(value = 1, grid = grid2D)
 VF.grid   <- setup.prop.2D(value = 1, grid = grid2D)
 

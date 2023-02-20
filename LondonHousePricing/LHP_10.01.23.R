@@ -65,10 +65,10 @@ FEMbasis = create.FEM.basis(mesh)
 
 # data
 #dataFrame = LN.prop[-which.duplicated,]
-dataFrame = LN.prop
+dataFrame = LPP
 dataFrame@coords = cbind(LPP$data$x, LPP$data$y)
 dataFrame$DATA.IDX = 1:nrow(dataFrame)
-dataFrame$PURCHASE = dataFrame$PURCHASE/10^5 # k pounds
+dataFrame$PURCHASE = dataFrame$PURCHASE/10^3 # k pounds
 
 # 10-folds Cross Validation
 K = 10
@@ -187,3 +187,20 @@ for(i in 1:K){
   )
 }
 dev.off()
+
+###########################
+
+X = cbind( dataFrame$FLOORSZ, 
+           dataFrame$PROF,   #, 
+           dataFrame$BATH2) #, 
+lambda = 10^seq(from=-3,to=-1.5,length.out=20) 
+output_CPP = smooth.FEM(observations = dataFrame$PURCHASE, 
+                        locations = dataFrame@coords,
+                        FEMbasis = FEMbasis,
+                        covariates = X,
+                        lambda = lambda,
+                        lambda.selection.criterion = "grid",
+                        lambda.selection.lossfunction = "GCV",
+                        DOF.evaluation = "stochastic")
+
+plot(log10(lambda), output_CPP$optimization$GCV_vector)

@@ -1,0 +1,83 @@
+---
+title: "ESAME DI STATISTICA - ING. MATEMATICA"
+subtitle: "Prova di laboratorio R"
+author: "Nome Cognome - Matricola" 
+date: "`r format(Sys.time(), '%d/%m/%Y')`"
+output: 
+  pdf_document:
+    number_sections: false
+    fig_caption: true
+    highlight: tango
+
+urlcolor: blue
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, fig.width= 4.5, 
+                                   fig.height= 3.5, 
+                                   fig.align= "center")
+```
+
+
+TESTO DELLA PROVA
+
+# Punto 1
+
+DOMANDA ...
+
+```{r}
+
+# # # # # # # # # # # #
+# Inserire codice qui #
+# # # # # # # # # # # #
+
+```
+
+
+# Punto 2
+
+DOMANDA ...
+
+```{r}
+
+# # # # # # # # # # # #
+# Inserire codice qui #
+# # # # # # # # # # # #
+
+```
+
+# Punto 3
+
+DOMANDA ...
+
+```{r}
+
+# # # # # # # # # # # #
+# Inserire codice qui #
+# # # # # # # # # # # #
+
+```
+
+# Punto 4
+
+DOMANDA ...
+
+```{r}
+
+# # # # # # # # # # # #
+# Inserire codice qui #
+# # # # # # # # # # # #
+
+```
+
+# Punto 5
+
+DOMANDA ...
+
+```{r}
+
+# # # # # # # # # # # #
+# Inserire codice qui #
+# # # # # # # # # # # #
+
+```

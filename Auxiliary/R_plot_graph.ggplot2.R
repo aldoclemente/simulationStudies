@@ -107,7 +107,8 @@ R_plot_graph.ggplot2.2<-function(FEM,
                                  ratio = diff(range(mesh$nodes[,1]))/diff(range(mesh$nodes[,2]) ),
                                  palette = jet.col,
                                  num.color = 28,
-                                 title.size = 26){
+                                 title.size = 26,
+                                 color.gradient = T){
   
   mesh=FEM$FEMbasis$mesh
   x=vector(mode="double")
@@ -147,7 +148,7 @@ R_plot_graph.ggplot2.2<-function(FEM,
     gplot <- ggplot(data=data, aes(x=x,y=y,group=grp.nodes)) + 
     geom_point(alpha=0.0) + 
     geom_line(aes(color=coef), size=line.size)+
-    scale_color_gradientn(colours=p, limits = c(color.min, color.max)) + 
+    scale_color_gradientn(colours=p, limits = c(color.min, color.max))+
     labs(x="",y="",color="", title=title) +  
     coord_fixed(ratio=ratio) + 
     theme_void() +
@@ -159,7 +160,11 @@ R_plot_graph.ggplot2.2<-function(FEM,
           axis.text.y=element_blank(),
           legend.key.width = unit(0.5,"cm"),
           legend.position = legend.pos)
-  
+    
+    if(!color.gradient){
+       gplot <- gplot + theme(legend.position = "none") 
+     }
+    
   return (gplot)
 }
 
