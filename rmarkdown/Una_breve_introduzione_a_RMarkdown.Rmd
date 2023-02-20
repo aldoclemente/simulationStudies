@@ -66,7 +66,8 @@ tinytex::install_tinytex()
 
 Se Leopardi fosse vissuto nel 2023 avrebbe sicuramente utilizzato `RMarkdown` per scrivere *L'Infinito*.
 
-`# L'Infinito`                                           \newline
+`# L'Infinito`   \newline
+`                                                       `         \newline
 `Sempre caro mi fu quest’ermo colle,           \newline`          \newline    
 `E questa siepe, che da tanta parte            \newline`            \newline
 `Dell’ultimo orizzonte il guardo esclude.      \newline`        \newline
@@ -86,6 +87,7 @@ Se Leopardi fosse vissuto nel 2023 avrebbe sicuramente utilizzato `RMarkdown` pe
 Risultato:
 
 # L'Infinito
+
 Sempre caro mi fu quest’ermo colle,           \newline
 E questa siepe, che da tanta parte            \newline
 Dell’ultimo orizzonte il guardo esclude.      \newline
@@ -115,48 +117,67 @@ Di seguito un esempio di chunk: \newline
 \ *` ``` `* \
 
 
-##### Esempio \
+##### Esempio 
+
+In questo esempio le istruzioni presenti nel chunk sono eseguite. Inoltre, sia le istruzioni nel chunk che i risultati di queste istruzioni sono stampati sul file pdf.
 
 *` ```{r}`* \
 \ *` print("Hello world!") `*  \
+\ *` a = 1 `* \
+\ *` print(a)`* \
 \ *` ``` `* \
 
-Viene stampato:  
 ```{r}
 print("Hello world!")
+a = 1
+print(a)
 ```
 
 ##### Esempio 
 
-In questo esempio le istruzioni presenti nel chunk **NON** sono eseguite e sono stampate sul file pdf. \newline
+In questo esempio le istruzioni presenti nel chunk **NON** sono eseguite, ma sono stampate nel file pdf. \newline
 
 *` ```{r, eval=FALSE}`* \
-\ *` print("Hello world!") `*  \
-\ *` a = 2 `* \
-\ *` ``` `* \
-
-```{r, eval=FALSE}
-print("Hello world!")
-a = 2 
-```
-##### Esempio 
-
-In questo esempio le istruzioni presenti nel chunk sono eseguite e **NON** stampate nel file pdf.
-In particolare, `echo=FALSE` evita che le istruzioni inserite nel chunk vengano stampate sul file pdf  e `results="hide"` evita che l'output che osserveresti su console venga stampato sul file pdf.
-
-*` ```{r, echo=FALSE, results="hide"}`* \
 \ *` print("Hello world!") `*  \
 \ *` b = 2 `* \
 \ *` ``` `* \
 
-```{r, echo=FALSE,results="hide"}
+```{r, eval=FALSE}
 print("Hello world!")
-b = 2
+b = 2 
 ```
-Prova:
-*` ```{r}`* \
-\ *` print(b) `*  \
+
+##### Esempio 
+
+In questo esempio le istruzioni presenti nel chunk sono eseguite e stampate nel file pdf, ma i risultati di queste espressioni **NON** sono stampati nel file pdf. 
+
+*` ```{r, results='hide'}`* \
+\ *` print("Hello world!") `*  \
+\ *` c = 3 `* \
+\ *` print(c) `* \
 \ *` ``` `* \
+
+```{r, results='hide'}
+print("Hello world!")
+c=3
+print(c)
+```
+
+##### Esempio 
+
+In questo esempio le istruzioni presenti nel chunk sono eseguite, ma né le istruzioni presenti nel chunk né i risultati vengono stampati nel file pdf.
+
+*` ```{r, include=FALSE}`* \
+\ *` print("Hello world!") `*  \
+\ *` d = 4 `* \
+\ *` print(d) `* \
+\ *` ``` `* \
+
+```{r, include=FALSE}
+print("Hello world!")
+d = 4
+print(d)
+```
 
 ##### Esempio \
 
@@ -209,7 +230,7 @@ Un nuovo chunk può essere inserito tramite:
 
 ##### Attenzione 
 
-All'interno del chunk, assicurarsi di non superare la barra verticale posta sulla destra. Questo accorgimento permette che codice stampato nel file output non venga troncato risultando illegibile, come mostrato dalla figura che segue.
+All'interno del chunk, assicurarsi di inserire istruzioni (o commenti R) entro la barra verticale evidenziata dalla figura che segue. Questo accorgimento evita che il codice inserito nel chunk possa essere troncato nel file pdf.
 
 ![](imgs/Chunk-rendering.pdf){width=85%}
 
@@ -217,10 +238,14 @@ All'interno del chunk, assicurarsi di non superare la barra verticale posta sull
 
 ##### RMarkdown Cookbook \newline
 L'obiettivo di questa breve guida è fornire gli strumenti indispensabili per generare un report pdf utile alla valutazione della prova di laboratorio. \newline
-Per approfondimenti su `RMarkdown` fare riferimento a [R Markdown Cookbook](https://bookdown.org/yihui/rmarkdown-cookbook/).
+Per approfondimenti su `RMarkdown` consultare: 
 
-##### Shortcuts da tastiera per tilde e back tick (utenti windows) \newline
-Di seguito le istruzioni per creare shortcuts da tastiera per la **~** **(tilde)** (combinazione `AltGr+'`) e **`** **(back tick)** (combinazione `AltGr+ì`)
+* [Lezioni RMarkdown](https://rmarkdown.rstudio.com/lesson-1.html)
+
+* [R Markdown Cookbook](https://bookdown.org/yihui/rmarkdown-cookbook/).
+
+##### Shortcuts da tastiera per tilde e backtick (utenti windows) \newline
+Di seguito vengono riportate le istruzioni per creare shortcuts da tastiera per i simboli di `~` **(tilde)** (combinazione `AltGr+'`) e   `` ` ``  **(backtick/accento grave)** (combinazione `AltGr+ì`)  
 
 1. Installare [AutoHotKey](https://www.autohotkey.com/) 
 
