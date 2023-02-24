@@ -16,10 +16,6 @@ FEMbasis = create.FEM.basis(mesh_)
 x11()
 plot(mesh_, pch=".")
 
-f <- function(x){
-    return(abs(cos(x)))
-}
-
 f <- function(x) {
     return(cos(2*x))
 }
@@ -46,7 +42,7 @@ graphics.off()
 
 source("../utils.R")
 
-N = 50
+N = 25
 x_1 = seq(0,pi/2, length.out=N)
 
 h = pi*cos(pi/4) / (N-1)
@@ -124,14 +120,14 @@ points(mesh_$nodes[ordering_3,1], sin(seq(0, pi, length.out=(length(ordering_3))
 
 spat.stat <- as.spatstat.linnet.fdaPDE(mesh_)
 
-n_ = 10000
+n_ = 1000
 locs = runiflpp(n_, spat.stat)
 
 locs_ = cbind(locs$data$x, locs$data$y)
 
 observations_ = as.matrix( f(locs_[,1], locs_[,2]) )
 
-SR_PDE = smooth.FEM(observations= observations_ , locations = locs_, FEMbasis=FEMbasis, lambda=1e-5)
+SR_PDE = smooth.FEM(observations= observations_ , locations = locs_, FEMbasis=FEMbasis, lambda=1e-2)
 plot(SR_PDE$fit.FEM)
 
 ordering_1 = 1:N
@@ -170,3 +166,56 @@ plot(mesh_$nodes[ordering_3,1], SR_PDE$fit.FEM$coeff[ordering_3,], type="l" ,lwd
      ylim=c( min(SR_PDE$fit.FEM$coeff, sin(seq(0, pi, length.out=(length(ordering_3)))/2 )  ),
              max(SR_PDE$fit.FEM$coeff, sin(seq(0, pi, length.out=(length(ordering_3)))/2 )  )) )
 points(mesh_$nodes[ordering_3,1], sin(seq(0, pi, length.out=(length(ordering_3)))/2), type="l", lwd=2, col="red")
+
+# # #  # # # 
+library(femR)
+source("/home/aldo/Desktop/fdaPDE/wrappers/femR/tests/utils.R")
+{
+N = 25
+x_1 = seq(0,pi/2, length.out=N)
+
+h = pi*cos(pi/4) / (N-1)
+x_2 = x_1[N] + seq(0, pi*cos(pi/4), by=h)
+x_2 = x_2[-1]
+x_3 = x_2
+
+y_1 = rep(0, times=N)
+h_y = pi*sin(pi/4) / (N-1)
+y_2 = seq(0, pi*sin(pi/4), by=h_y)
+y_2 = y_2[-1]
+y_3 = -y_2
+
+E1_ = cbind(x_1, y_1)
+E2_ = cbind(x_2, y_2)
+E3_ = cbind(x_3, y_3)
+
+nodes_ = rbind(E1_, E2_, E3_)
+
+EDGE1 = cbind(1:(N-1), 2:N)
+#EDGE2 = cbind(N:(2*N-2), (N+1): (2*N-1))
+EDGE2 = cbind((N+1): (2*N-1), N:(2*N-2))
+EDGE3 = cbind( c(N, seq(2*N,(3*N-3),by=1)), seq(2*N, (3*N-2), by=1))
+
+edges_ = rbind(EDGE1, EDGE2, EDGE3)
+}
+
+mesh = create.mesh.1.5D(nodes= nodes_, edges= edges_)
+graph_ <- list(nodes= as.matrix(mesh$nodes[,1]), edges= mesh$edges, elements= mesh$edges, neigh= sparseNeigh(mesh), boundary= mesh$nodesmarkers)
+
+PDE_parameters <- list("diffusion" = 1., "transport" = matrix(0.,nrow=2,ncol=1), "reaction" = 0.)
+PDE <- new(PDE_1_5D_isotropic_ORDER_1, graph_)
+
+PDE$set_PDEparameters(PDE_parameters)
+
+f <- function(x,y){
+    ret_ = matrix(0, nrow = length(x), ncol=1)
+    
+    for(i in 1:length(x)){
+        if(abs(y[i]) < .Machine$double.eps)
+            ret_[i]=cos(x[i])
+        else 
+            ret_[i] = sin( (x[i]-x_1[N])/(2*cos(pi/4)))
+
+        }
+    return(ret_)
+}
