@@ -294,6 +294,7 @@ as.lattice.fdaPDE<-function(mesh){
 #'   
 as.spatstat.linnet.fdaPDE <- function(mesh){
   
+  if(mesh$order==1){
   vertices = ppp(x = mesh$nodes[,1], 
                  y = mesh$nodes[,2], 
                  window = owin(xrange = c(min(mesh$nodes[,1]),max(mesh$nodes[,1])),
@@ -301,6 +302,16 @@ as.spatstat.linnet.fdaPDE <- function(mesh){
   spat.stat.linnet = linnet(vertices = vertices, edges = mesh$edges)
  
  return(spat.stat.linnet)
+  }else{
+    tmp = mesh$edges[,3]
+    edges = mesh$edges[,1:2]
+    nodes = mesh$nodes[-tmp,]
+    vertices = ppp(x = nodes[,1], 
+                 y =   nodes[,2], 
+                 window = owin(xrange = c(min(nodes[,1]),max(nodes[,1])),
+                               yrange = c(min(nodes[,2]),max(nodes[,2]))))
+  spat.stat.linnet = linnet(vertices = vertices, edges = edges)
+  }
 }
 
 #' Utility to convert fdaPDE Linear Network mesh into spatstat linnet. 
