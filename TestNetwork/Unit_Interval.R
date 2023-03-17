@@ -169,6 +169,8 @@ points(mesh_$nodes[ordering_3,1], sin(seq(0, pi, length.out=(length(ordering_3))
 
 # # #  # # # 
 library(femR)
+library(fdaPDE)
+rm(list=ls())
 source("/home/aldo/Desktop/fdaPDE/wrappers/femR/tests/utils.R")
 {
 N = 25
@@ -200,7 +202,9 @@ edges_ = rbind(EDGE1, EDGE2, EDGE3)
 }
 
 mesh = create.mesh.1.5D(nodes= nodes_, edges= edges_)
-graph_ <- list(nodes= as.matrix(mesh$nodes[,1]), edges= mesh$edges, elements= mesh$edges, neigh= sparseNeigh(mesh), boundary= mesh$nodesmarkers)
+x11()
+plot(mesh, pch=".")
+graph_ <- list(nodes= as.matrix(mesh$nodes), edges= mesh$edges, elements= mesh$edges, neigh= sparseNeigh(mesh), boundary= mesh$nodesmarkers)
 
 PDE_parameters <- list("diffusion" = 1., "transport" = matrix(0.,nrow=2,ncol=1), "reaction" = 0.)
 PDE <- new(PDE_1_5D_isotropic_ORDER_1, graph_)
