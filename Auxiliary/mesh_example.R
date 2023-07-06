@@ -80,59 +80,96 @@ R_plot_mesh.ggplot = function(mesh, alpha = 1, line.size=0.75,
 
 mesh.ref = refine.by.splitting.mesh.1.5D(mesh)
 
+LINE.SIZE = 2.5
 
 pdf("network_notation.pdf")
 
-R_plot_mesh.ggplot(mesh=mesh, points_ = mesh$nodes, 
+R_plot_mesh.ggplot(mesh=mesh, points_ = mesh$nodes, line.size = LINE.SIZE,
                    title = bquote(G[]))
 
-R_plot_mesh.ggplot(mesh=mesh, points_ = mesh$nodes, 
+R_plot_mesh.ggplot(mesh=mesh, points_ = mesh$nodes, line.size = LINE.SIZE,
                    title = "")
 
-R_plot_mesh.ggplot(mesh, points_ = mesh$nodes[mesh$nodesmarkers, ], 
+R_plot_mesh.ggplot(mesh, points_ = mesh$nodes[mesh$nodesmarkers, ], line.size = LINE.SIZE,
                    points.color = "red2", 
                    title = bquote(W[B]) )
 R_plot_mesh.ggplot(mesh, points_ = matrix( mesh$nodes[!mesh$nodesmarkers, ], nrow=1,ncol=2), 
-                   points.color = "green4", 
+                   points.color = "green4", line.size = LINE.SIZE,
                    title = bquote(W[I]) )
 
-R_plot_mesh.ggplot(mesh, points_ = mesh$nodes, 
+R_plot_mesh.ggplot(mesh, points_ = mesh$nodes, line.size = LINE.SIZE,
                    title = "")
 R_plot_mesh.ggplot(mesh, points_ = mesh$nodes[mesh$nodesmarkers, ], 
-                   points.color = "red2", 
+                   points.color = "red2", line.size = LINE.SIZE,
                    title = "" )
 R_plot_mesh.ggplot(mesh, points_ = matrix( mesh$nodes[!mesh$nodesmarkers, ], nrow=1,ncol=2), 
-                   points.color = "green4", 
+                   points.color = "green4", line.size = LINE.SIZE,
                    title = "" )
 
-R_plot_mesh.ggplot(mesh.ref, points_ = mesh.ref$nodes,
+R_plot_mesh.ggplot(mesh.ref, points_ = mesh.ref$nodes,line.size = LINE.SIZE,
                    points.color = "red2",
                    title = "")
 
-R_plot_mesh.ggplot(mesh.ref, points_ = mesh.ref$nodes, 
+R_plot_mesh.ggplot(mesh.ref, points_ = mesh.ref$nodes, line.size = LINE.SIZE,
                    title = "")
 R_plot_mesh.ggplot(mesh.ref, points_ = mesh.ref$nodes[mesh.ref$nodesmarkers, ], 
-                   points.color = "red2", 
+                   points.color = "red2", line.size = LINE.SIZE,
                    title = "" )
 
 R_plot_mesh.ggplot(mesh.ref, points_ = matrix( mesh.ref$nodes[!mesh.ref$nodesmarkers, ], nrow=nrow(mesh.ref$nodes[!mesh.ref$nodesmarkers, ]),ncol=2), 
-                   points.color = "green4", 
+                   points.color = "green4", line.size = LINE.SIZE,
                    title = "" )
 
-R_plot_mesh.ggplot(mesh.ref, 
+R_plot_mesh.ggplot(mesh.ref, line.size = LINE.SIZE,
                    points_ = matrix( mesh.ref$nodes[!mesh.ref$nodesmarkers, ], nrow=nrow(mesh.ref$nodes[!mesh.ref$nodesmarkers, ]),ncol=2), 
                    points.color = "green4", 
                    points2_ = mesh.ref$nodes[mesh.ref$nodesmarkers, ],
                    points2.color = "red2",
                    title = "" )
 
-R_plot_mesh.ggplot(mesh, 
+R_plot_mesh.ggplot(mesh, line.size = LINE.SIZE,
                    points_ = matrix( mesh$nodes[!mesh$nodesmarkers, ], nrow=sum(!mesh$nodesmarkers),ncol=2), 
                    points.color = "green4", 
                    points2_ = mesh$nodes[mesh$nodesmarkers, ],
                    points2.color = "red2",
                    title = "" )
 
+R_plot_mesh.ggplot(mesh, points_ = matrix( mesh$nodes[!mesh$nodesmarkers, ], nrow=1,ncol=2), 
+                   points.color = "black", line.size = LINE.SIZE,
+                   title = "" )
+
+
+dev.off()
+
+nodes = matrix(c(0,0,1,0,1/2,0), nrow=3,ncol=2, byrow = T)
+edges = matrix(c(1,3,3,2), nrow=2,ncol=2, byrow=T)
+mesh = create.mesh.1.5D(nodes, edges)
+
+
+pdf("unit_square.pdf")
+
+R_plot_mesh.ggplot(mesh=mesh, points_ = mesh$nodes, line.size = LINE.SIZE,
+                   title = bquote(G[]),ratio = 1)
+
+R_plot_mesh.ggplot(mesh=mesh, points_ = mesh$nodes, line.size = LINE.SIZE,
+                   title = "",ratio = 1)
+
+R_plot_mesh.ggplot(mesh, points_ = mesh$nodes[mesh$nodesmarkers, ], line.size = LINE.SIZE,
+                   points.color = "red2", 
+                   title = bquote(W[B]),ratio = 1 )
+R_plot_mesh.ggplot(mesh, points_ = matrix( mesh$nodes[!mesh$nodesmarkers, ], nrow=1,ncol=2), 
+                   points.color = "green4", 
+                   title = bquote(W[I]) , ratio = 1)
+
+R_plot_mesh.ggplot(mesh, points_ = mesh$nodes, line.size = LINE.SIZE,
+                   title = "", ratio = 1)
+R_plot_mesh.ggplot(mesh, points_ = mesh$nodes[mesh$nodesmarkers, ], line.size = LINE.SIZE,
+                   points.color = "red2", 
+                   title = "" ,ratio = 1)
+
+R_plot_mesh.ggplot(mesh, points_ = matrix( mesh$nodes[!mesh$nodesmarkers, ], nrow=1,ncol=2), 
+                   points.color = "black", line.size = LINE.SIZE,
+                   title = "" ,ratio = 1)
 
 dev.off()
 
@@ -272,5 +309,149 @@ R_plot_observations.ggplot(mesh, points_ = dataFrame@coords, points.value = data
                            alpha = 1, line.size=0.0725,
                            points.size = 1)
 
+
+dev.off()
+
+# # # # # #
+# ONTARIO #
+# # # # # #
+library(ggplot2)
+library(fdaPDE)
+library(shp2graph)
+source("utils.R")
+source("DensityEstimation/setting.R")
+source("settings.R")
+
+sett = setting("ontario") 
+mesh = sett$mesh
+spat.stat.linnet = as.spatstat.linnet.fdaPDE(mesh)
+
+ntest = 2
+tests.names = c("test_1", "test_2")
+
+sources = c(32, 185, 400)
+auxiliary_test = aux_test[[ntest]]
+DENSITY = linfun(auxiliary_test, spat.stat.linnet) # test 2
+PP = rlpp(100, DENSITY)
+
+pdf("Ontario_RN.pdf")
+R_plot_mesh.ggplot(mesh, points_ = NULL, line.size = 1, 
+                   title = "",line.color = "black" )
+
+R_plot_mesh.ggplot(mesh, points_ = cbind(PP$data$x, PP$data$y), 
+                   points.color = "red2", line.size = 1, points.size = 2,
+                   title = "" )
+R_plot_mesh.ggplot(mesh, points_ = cbind(PP$data$x, PP$data$y), 
+                   points.color = "red2", line.size = 1, points.size = 2.5,
+                   title = "" )
+
+R_plot_mesh.ggplot(mesh, points_ = cbind(PP$data$x, PP$data$y), 
+                   points.color = "red2", line.size = 1, points.size = 3,
+                   title = "" )
+R_plot_mesh.ggplot(mesh, points_ = cbind(PP$data$x, PP$data$y), 
+                   points.color = "red2", line.size = 1, points.size = 3.5,
+                   title = "" )
+
+
+dev.off()
+
+# # # # # # #
+# SIMPLENET #
+# # # # # # #
+library(ggplot2)
+library(fdaPDE)
+library(shp2graph)
+source("utils.R")
+source("DensityEstimation/setting.R")
+source("settings.R")
+
+sett = setting("simplenet") 
+mesh = sett$mesh
+spat.stat.linnet = as.spatstat.linnet.fdaPDE(mesh)
+
+ntest = 1
+tests.names = c("test_1", "test_2")
+
+sources = c(6, 8)
+auxiliary_test = aux_test[[ntest]]
+DENSITY = linfun(auxiliary_test, spat.stat.linnet) # test 2
+PP = rlpp(100, DENSITY)
+
+pdf("simplenet.pdf")
+R_plot_mesh.ggplot(mesh, points_ = NULL, line.size = 1, 
+                   title = "",line.color = "black" )
+
+R_plot_mesh.ggplot(mesh, points_ = cbind(PP$data$x, PP$data$y), 
+                   points.color = "red2", line.size = 1, points.size = 2,
+                   title = "" )
+R_plot_mesh.ggplot(mesh, points_ = cbind(PP$data$x, PP$data$y), 
+                   points.color = "red2", line.size = 1, points.size = 2.5,
+                   title = "" )
+
+R_plot_mesh.ggplot(mesh, points_ = cbind(PP$data$x, PP$data$y), 
+                   points.color = "red2", line.size = 1, points.size = 3,
+                   title = "" )
+R_plot_mesh.ggplot(mesh, points_ = cbind(PP$data$x, PP$data$y), 
+                   points.color = "red2", line.size = 1, points.size = 3.5,
+                   title = "" )
+
+
+dev.off()
+
+# # # # # #
+# CHICAGO #
+# # # # # #
+
+library(ggplot2)
+library(fdaPDE)
+library(shp2graph)
+source("utils.R")
+source("DensityEstimation/setting.R")
+source("settings.R")
+
+vertices = cbind(chicago$domain$vertices$x, chicago$domain$vertices$y)
+edges = cbind( chicago$domain$from, chicago$domain$to)
+mesh = create.mesh.1.5D(nodes = vertices, edges = edges)
+
+PP = chicago
+
+pdf("chicago_RN.pdf")
+R_plot_mesh.ggplot(mesh, points_ = NULL, line.size = 1, 
+                   title = "",line.color = "black" )
+
+R_plot_mesh.ggplot(mesh, points_ = cbind(PP$data$x, PP$data$y), 
+                   points.color = "red2", line.size = 1, points.size = 2,
+                   title = "" )
+R_plot_mesh.ggplot(mesh, points_ = cbind(PP$data$x, PP$data$y), 
+                   points.color = "red2", line.size = 1, points.size = 2.5,
+                   title = "" )
+
+R_plot_mesh.ggplot(mesh, points_ = cbind(PP$data$x, PP$data$y), 
+                   points.color = "red2", line.size = 1, points.size = 3,
+                   title = "" )
+R_plot_mesh.ggplot(mesh, points_ = cbind(PP$data$x, PP$data$y), 
+                   points.color = "red2", line.size = 1, points.size = 3.5,
+                   title = "" )
+
+
+dev.off()
+
+# # # # # #
+# ONTARIO #
+# # # # # #
+library(ggplot2)
+library(fdaPDE)
+library(shp2graph)
+source("utils.R")
+source("DensityEstimation/setting.R")
+source("settings.R")
+
+sett = setting("estevan") 
+mesh = sett$mesh
+spat.stat.linnet = as.spatstat.linnet.fdaPDE(mesh)
+
+pdf("Estevan_RN.pdf")
+R_plot_mesh.ggplot(mesh, points_ = NULL, line.size = 1, 
+                   title = "",line.color = "black" )
 
 dev.off()
